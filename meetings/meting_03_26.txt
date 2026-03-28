@@ -1,0 +1,26 @@
+# more ideas
+Custom MAC in soft logic -> hard to beat the hardened one in GTF
+
+DFE stuff is mostly custom 
+IBERT/custom RTL for BER Monitoring
+
+
+# priority of stuff
+1. PCIe scripts on hft/11 might be able to use: https://github.com/corundum/corundum/blob/master/fpga/lib/pcie/scripts/pcie_disable_fatal_err.sh # Run these once we get hft11 machine access
+2. Make corundum example # Binh
+3. 3422 GTF config  - basic w/ hard mac instead of raw mode in loopback
+- built in loopback (PMA only) # Andrew
+- loopback with hard 10G/25G MAC (need to plug in SFP+ cables)
+	- try to plug in solarflare and send random traffic into 3422?
+4. Might have to start writing custom RTL for Raw mode -> corundum adapter. # Guyan, Abhi - start with modifying the corundum frame check start
+
+# To do: soft mac & PCS
+- 66/64b decode, encode
+- CRC decode, encode
+- FCS
+- MAC appl. layer - packet responder/decoder, heavily pipelined
+
+Package (as ip?) and use on other FPGAs (U55C or maybe v80)
+
+3422 <-> solarflare x2 |  to do
+3422 <-> 3422 (loopback) | to do <- we can technically wait till we get PMA Loopback working

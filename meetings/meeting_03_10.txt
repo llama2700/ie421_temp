@@ -1,0 +1,38 @@
+`meeting_03_10.txt` 
+Current items
+- PCIe scripts?
+    - Needed for stability when image changes / breaks kernel. So we don't nuke the laptop
+
+Overall checkpoints
+1. Flash a bitstream of some sort (Binh trying I2C sideband control example for GTF)
+2. Loopback example next? 
+3. Conundrum shell?  -> Might want to try on U55C, for lack of anything else with a transceiver
+4. Send across 10G packets
+5. Transceiver optimizations
+6. ILA/ IBERT for measurements
+
+Possible side quest: Mini packet modifier <- modify some small data field in eth packet
+
+- Get OpenNIC bringup first - 100G? Need to figure out 10G
+Alternatives to opennic?
+Proposed: Conundrum (submodule for licensing) - FPGA build wokring on 10G Eth?
+Can test build scripts to build an example
+https://github.com/fpganinja/taxi for components
+
+# Project ideas
+## Custom RTL
+- Dynamic equalization 
+- 25G FEC
+- 10 FEC? 
+- Combined optimizations, compare round trip times
+- 66/64b encoding (multi step) 
+    - Control symbols (2b)
+    - DC equalization encoding <- for improving clock recovery 
+
+# To do for this week:
+1. Everyone install 2024.1 locally (if we don't have ssh access by Friday/spring break)
+2. Access to UL3422 Secure site - Andrew still waiting...
+3. Install 2024.1 to the laptop
+4. UL3524 experiment with example transceiver https://github.com/Xilinx/Alveo-Cards/tree/ul3524 -> modify RTL / comment stuff out?
+5. Everyone look through GTF datasheet (from secure site) and try to figure out any/all possible soft logic bypasses/modifications
+6. GitLab/GitHub repo setup ?  I'll figure out a structure for the files and the submodules. you guys can look over it and make any changes once I am able to push it to remote
