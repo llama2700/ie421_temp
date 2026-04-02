@@ -1,0 +1,19 @@
+# Abhi 
+- Working on DFE optimization. RTL modules partly implenented, need to start verif (just sanity)
+
+# Andrew 
+- Working on loopback. Figured out some required reg reads/writes etc from GTF loopback tb.
+	Try state machine in hardware? <- try to flash once Binh gets GTF up
+
+# Binh 
+- U55N Compile working 
+	UL3422 Flash GTF raw mode - bits toggling on ILA?
+
+# Guyan 
+- Hook up mqnic_app_block (Corundum) to GTF MAC output
+
+
+# group homework
+study PMA,PCS,MAC loop.
+look at 802.3 https://standards.ieee.org/ieee/802.3/10422/
+pick something you're interested in implementing or can think of any optimizations
