@@ -7,9 +7,9 @@
 # Clock domain declarations
 # ============================================================
 
-# Core clock (from PCIe or board oscillator, typically 250 MHz)
-# This should already be defined in your board constraints.
+# Core clock 
 # create_clock -period 4.000 -name clk_core [get_pins ...]
+# @bmn4 PCI or renesas 300mhz user clk here eventually
 
 # DRP clock — can be same as core or separate
 # If using a dedicated DRP clock:
