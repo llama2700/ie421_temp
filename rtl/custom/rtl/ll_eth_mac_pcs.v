@@ -50,6 +50,10 @@ module ll_eth_mac_pcs #(
     // Configuration
     input  wire [7:0]             cfg_ifg,
 
+    // Late FCS result (1 cycle after m_axis_tlast)
+    output wire                   rx_fcs_valid,
+    output wire                   rx_fcs_ok,
+
     // Status
     output wire                   rx_block_lock,
     output wire                   rx_bad_block,
@@ -89,6 +93,9 @@ ll_eth_rx #(
     .m_axis_tvalid(m_axis_tvalid),
     .m_axis_tlast(m_axis_tlast),
     .m_axis_tuser(m_axis_tuser),
+
+    .rx_fcs_valid(rx_fcs_valid),
+    .rx_fcs_ok(rx_fcs_ok),
 
     .rx_block_lock(rx_block_lock),
     .serdes_rx_bitslip(serdes_rx_bitslip),
