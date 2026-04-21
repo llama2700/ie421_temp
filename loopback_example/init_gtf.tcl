@@ -7,196 +7,144 @@ set device [get_hw_devices xcvu2p_0]
 current_hw_device $device
 refresh_hw_device $device
 
+# Flash FPGA
+set_property PROGRAM.FILE {/home/akshim2/gtfwizard_0_gtfmac_ex.bit} $device
+set_property PROBES.FILE {/home/akshim2/gtfwizard_0_gtfmac_ex.ltx} $device
+program_hw_devices $device
+puts "Device programmed."
+
+# Re-refresh after programming to pick up JTAG-AXI core
+refresh_hw_device $device
 set jaxi [get_hw_axis]
-puts "JTAG-AXI: $jaxi"
 
-# 1. Check initial status
-create_hw_axi_txn rd_stat [lindex $jaxi 0] -type READ -address 00000000 -force
-run_hw_axi rd_stat
-puts "Initial status   (0x00000): [get_property DATA [get_hw_axi_txns rd_stat]]"
+# Helper procs
+proc axi_read {jaxi addr} {
+    create_hw_axi_txn rd_txn [lindex $jaxi 0] -type READ -address [format "%08x" $addr] -force
+    run_hw_axi rd_txn
+    set raw [get_property DATA [get_hw_axi_txns rd_txn]]
+    scan $raw %x val
+    return $val
+}
 
-# 2. userrdy
-create_hw_axi_txn wr_urdy [lindex $jaxi 0] -type WRITE -address 0000000C -data 00000003 -force
-run_hw_axi wr_urdy
-puts "userrdy set"
+proc axi_write {jaxi addr data} {
+    create_hw_axi_txn wr_txn [lindex $jaxi 0] -type WRITE -address [format "%08x" $addr] -data [format "%08x" $data] -force
+    run_hw_axi wr_txn
+}
 
-# 3. Set loopback bits[6:4] = 3'b010 = 0x20
-create_hw_axi_txn wr_lb [lindex $jaxi 0] -type WRITE -address 00010408 -data 00000020 -force
-run_hw_axi wr_lb
-puts "Loopback set"
+proc axi_poll {jaxi addr mask expected {max_attempts 100000} {delay_ms 1}} {
+    for {set i 0} {$i < $max_attempts} {incr i} {
+        set val [axi_read $jaxi $addr]
+        if {($val & $mask) == $expected} { return [list $val $i] }
+        after $delay_ms
+    }
+    error "axi_poll timeout: addr=[format 0x%08x $addr] last=[format 0x%08x $val]"
+}
 
-# 4. Assert RX reset
-create_hw_axi_txn wr_rst_on [lindex $jaxi 0] -type WRITE -address 00010400 -data 00000002 -force
-run_hw_axi wr_rst_on
-puts "Reset asserted"
+# === Step 1: Wait for DUT alive ===
+axi_poll $jaxi 0x00000 0x3 0x0
+
+# === Step 2: Report userrdy ===
+axi_write $jaxi 0x0000C 0x00000003
+
+# === Step 3: Near-end loopback (bits[6:4] = 010) ===
+set lb [axi_read $jaxi 0x10408]
+axi_write $jaxi 0x10408 [expr {($lb & 0xFFFFFF8F) | 0x00000020}]
+
+# === Step 4-5: RX reset cycle ===
+axi_write $jaxi 0x10400 0x00000002
+after 100
+axi_write $jaxi 0x10400 0x00000000
 after 500
 
-# 5. Deassert RX reset
-create_hw_axi_txn wr_rst_off [lindex $jaxi 0] -type WRITE -address 00010400 -data 00000000 -force
-run_hw_axi wr_rst_off
-puts "Reset deasserted"
+# === Step 6: GTFMAC data rate (10G) ===
+axi_write $jaxi 0x10000 0x00000000
 
-# 6. Set data rate
-create_hw_axi_txn wr_rate [lindex $jaxi 0] -type WRITE -address 00010000 -data 00000000 -force
-run_hw_axi wr_rate
-puts "Data rate set"
+# === Step 7: HWCHK data rate ===
+set hwcfg [axi_read $jaxi 0x00010]
+set hwcfg [expr {$hwcfg | (0 << 0) | (0 << 16)}]
+axi_write $jaxi 0x00010 $hwcfg
 
-# 7. Allow bitslip
-create_hw_axi_txn wr_bs [lindex $jaxi 0] -type WRITE -address 000000A4 -data 00000000 -force
-run_hw_axi wr_bs
-puts "Bitslip allowed"
-after 2000
+# === Step 8: Allow bitslip ===
+axi_write $jaxi 0x000A4 0x00000000
 
-# 8. Read block lock status
-create_hw_axi_txn rd_lock [lindex $jaxi 0] -type READ -address 000000A0 -force
-run_hw_axi rd_lock
-puts "Block lock       (0x000A0): [get_property DATA [get_hw_axi_txns rd_lock]]"
+# === Step 9: Wait for block lock ===
+axi_poll $jaxi 0x000A0 0x00010000 0x00010000
 
-# 9. Read loopback confirm
-create_hw_axi_txn rd_lb [lindex $jaxi 0] -type READ -address 00010408 -force
-run_hw_axi rd_lb
-puts "Loopback reg     (0x10408): [get_property DATA [get_hw_axi_txns rd_lb]]"
+# === Step 10: Trigger bitslip correction ===
+axi_write $jaxi 0x000A4 0x00000001
 
-# 10. Trigger bitslip correction
-create_hw_axi_txn wr_bs2 [lindex $jaxi 0] -type WRITE -address 000000A4 -data 00000001 -force
-run_hw_axi wr_bs2
-puts "Bitslip correction triggered"
-after 500
+# === Step 11: Wait for bitslip done ===
+axi_poll $jaxi 0x000A0 0x00040000 0x00040000 100 10
 
-# 11. Confirm bitslip done (bit[18]) and block lock again (bit[16])
-create_hw_axi_txn rd_lock2 [lindex $jaxi 0] -type READ -address 000000A0 -force
-run_hw_axi rd_lock2
-puts "Block lock after bitslip (0x000A0): [get_property DATA [get_hw_axi_txns rd_lock2]]"
+# === Step 12: Wait for block lock re-acquire ===
+axi_poll $jaxi 0x000A0 0x00010000 0x00010000
 
-# 12. Wait for link up - poll 0x000 bits[11:8] == 0
-after 2000
-create_hw_axi_txn rd_link [lindex $jaxi 0] -type READ -address 00000000 -force
-run_hw_axi rd_link
-puts "Link status      (0x00000): [get_property DATA [get_hw_axi_txns rd_link]]"
+# === Step 12b: Wait for RX buffer bypass ===
+after 5000
 
-# 13. TX config: fcs_ins_enable=1, ipg=8 -> 0x00000802
-create_hw_axi_txn wr_txcfg [lindex $jaxi 0] -type WRITE -address 00010004 -data 00000802 -force
-run_hw_axi wr_txcfg
-puts "TX config set"
+# === Step 13: Wait for link up (status bits[11:8] == 0) ===
+axi_poll $jaxi 0x00000 0x00000F00 0x00000000 10000 1
 
-# 14. RX config: all zeros
-create_hw_axi_txn wr_rxcfg [lindex $jaxi 0] -type WRITE -address 00010008 -data 00000000 -force
-run_hw_axi wr_rxcfg
-puts "RX config set"
+# === Step 14: TX config ===
+set txcfg [axi_read $jaxi 0x10004]
+set txcfg [expr {($txcfg & 0xFFFFE0F1) | (1 << 1) | (8 << 8)}]
+axi_write $jaxi 0x10004 $txcfg
 
-# 15. Min packet len = 64 = 0x40
-create_hw_axi_txn wr_minpkt [lindex $jaxi 0] -type WRITE -address 0001000C -data 00000040 -force
-run_hw_axi wr_minpkt
-puts "Min packet len set"
+# === Step 15: RX config ===
+set rxcfg [axi_read $jaxi 0x10008]
+set rxcfg [expr {$rxcfg & 0xFFFFFF9B}]
+axi_write $jaxi 0x10008 $rxcfg
 
-# 16. Max packet len = 1500 = 0x5DC
-create_hw_axi_txn wr_maxpkt [lindex $jaxi 0] -type WRITE -address 00010010 -data 000005DC -force
-run_hw_axi wr_maxpkt
-puts "Max packet len set"
+# === Step 16-17: MAC min/max packet len ===
+axi_write $jaxi 0x1000C 0x00000040
+axi_write $jaxi 0x10010 0x000005DC
 
-# 17. HWCHK config: read-modify-write, set fcs_ins_enable bit[4]
-create_hw_axi_txn rd_hwcfg [lindex $jaxi 0] -type READ -address 00000010 -force
-run_hw_axi rd_hwcfg
-set hwcfg [get_property DATA [get_hw_axi_txns rd_hwcfg]]
-set hwcfg_val [expr {[scan $hwcfg %x tmp; set tmp] | 0x00000010}]
-set hwcfg_hex [format "%08x" $hwcfg_val]
-create_hw_axi_txn wr_hwcfg [lindex $jaxi 0] -type WRITE -address 00000010 -data $hwcfg_hex -force
-run_hw_axi wr_hwcfg
-puts "HWCHK config set: $hwcfg_hex"
+# === Step 18: HWCHK config (fcs_ins_enable) ===
+set hwcfg [axi_read $jaxi 0x00010]
+set hwcfg [expr {$hwcfg | (1 << 4)}]
+axi_write $jaxi 0x00010 $hwcfg
 
-# 18. Error injection = 0
-create_hw_axi_txn wr_errinj [lindex $jaxi 0] -type WRITE -address 00000040 -data 00000000 -force
-run_hw_axi wr_errinj
-puts "Error injection set"
+# === Step 19-20: No error/poison injection ===
+axi_write $jaxi 0x00040 0x00000000
+axi_write $jaxi 0x00098 0x00000000
 
-# 19. Poison injection = 0
-create_hw_axi_txn wr_poison [lindex $jaxi 0] -type WRITE -address 00000098 -data 00000000 -force
-run_hw_axi wr_poison
-puts "Poison injection set"
+# === Step 21-22: HWCHK min/max frame len ===
+axi_write $jaxi 0x00028 0x00000040
+axi_write $jaxi 0x00024 0x000005DC
 
-# 20. Min frame len = 64 = 0x40
-create_hw_axi_txn wr_minfrm [lindex $jaxi 0] -type WRITE -address 00000028 -data 00000040 -force
-run_hw_axi wr_minfrm
-puts "Min frame len set"
+# === Step 23: Gen mode (random) ===
+axi_write $jaxi 0x00014 0x00000000
 
-# 21. Max frame len = 1500 = 0x5DC
-create_hw_axi_txn wr_maxfrm [lindex $jaxi 0] -type WRITE -address 00000024 -data 000005DC -force
-run_hw_axi wr_maxfrm
-puts "Max frame len set"
+# === Step 24: Frames to send ===
+axi_write $jaxi 0x0002C 0x00000032
 
-# 22. Frame gen mode = 0 (random), variable_ipg = 0
-create_hw_axi_txn wr_genmode [lindex $jaxi 0] -type WRITE -address 00000014 -data 00000000 -force
-run_hw_axi wr_genmode
-puts "Frame gen mode set"
+# === Step 25-26: Init stats ===
+axi_write $jaxi 0x00090 0x00000001
+axi_write $jaxi 0x1040C 0x00000001
+after 100
 
-# 23. Frames to send = 50 = 0x32
-create_hw_axi_txn wr_nfrm [lindex $jaxi 0] -type WRITE -address 0000002C -data 00000032 -force
-run_hw_axi wr_nfrm
-puts "Frames to send set"
+# === Step 27: START generator + monitor ===
+axi_write $jaxi 0x00020 0x00000011
+after 5000
 
-# 24. Init HWCHK stats
-create_hw_axi_txn wr_hwstat [lindex $jaxi 0] -type WRITE -address 00000090 -data 00000001 -force
-run_hw_axi wr_hwstat
-puts "HWCHK stats initialized"
-
-# 25. Init GTFMAC stats
-create_hw_axi_txn wr_macstat [lindex $jaxi 0] -type WRITE -address 0001040C -data 00000001 -force
-run_hw_axi wr_macstat
-puts "GTFMAC stats initialized"
-
-# 26. Start frame generator and monitor
-create_hw_axi_txn wr_gen_en [lindex $jaxi 0] -type WRITE -address 00000020 -data 00000011 -force
-run_hw_axi wr_gen_en
-puts "Frame generator started"
-
-# Wait for frames to be sent (50 frames at 10G should be near-instant, wait 1s to be safe)
+# === Step 28: STOP generator ===
+axi_write $jaxi 0x00020 0x00000000
 after 1000
 
-# 27. Stop frame generator
-create_hw_axi_txn wr_gen_off [lindex $jaxi 0] -type WRITE -address 00000020 -data 00000000 -force
-run_hw_axi wr_gen_off
-puts "Frame generator stopped"
-
-# 28. Tick HWCHK stats for collection
-create_hw_axi_txn wr_hwstat2 [lindex $jaxi 0] -type WRITE -address 00000090 -data 00000001 -force
-run_hw_axi wr_hwstat2
-
-# 29. Tick GTFMAC stats for collection
-create_hw_axi_txn wr_macstat2 [lindex $jaxi 0] -type WRITE -address 0001040C -data 00000001 -force
-run_hw_axi wr_macstat2
+# === Step 29-30: Tick stats for collection ===
+axi_write $jaxi 0x00090 0x00000001
+axi_write $jaxi 0x1040C 0x00000001
 after 500
 
-# 30. Read TX total packets (64-bit, two 32-bit reads)
-create_hw_axi_txn rd_txpkt_lo [lindex $jaxi 0] -type READ -address 00010700 -force
-run_hw_axi rd_txpkt_lo
-create_hw_axi_txn rd_txpkt_hi [lindex $jaxi 0] -type READ -address 00010704 -force
-run_hw_axi rd_txpkt_hi
-puts "TX total packets lo (0x10700): [get_property DATA [get_hw_axi_txns rd_txpkt_lo]]"
-puts "TX total packets hi (0x10704): [get_property DATA [get_hw_axi_txns rd_txpkt_hi]]"
-
-# 31. Read RX total packets
-create_hw_axi_txn rd_rxpkt_lo [lindex $jaxi 0] -type READ -address 00010808 -force
-run_hw_axi rd_rxpkt_lo
-create_hw_axi_txn rd_rxpkt_hi [lindex $jaxi 0] -type READ -address 0001080C -force
-run_hw_axi rd_rxpkt_hi
-puts "RX total packets lo (0x10808): [get_property DATA [get_hw_axi_txns rd_rxpkt_lo]]"
-puts "RX total packets hi (0x1080C): [get_property DATA [get_hw_axi_txns rd_rxpkt_hi]]"
-
-# 32. Read TX good packets
-create_hw_axi_txn rd_txgood_lo [lindex $jaxi 0] -type READ -address 00010708 -force
-run_hw_axi rd_txgood_lo
-puts "TX good packets  lo (0x10708): [get_property DATA [get_hw_axi_txns rd_txgood_lo]]"
-
-# 33. Read RX good packets
-create_hw_axi_txn rd_rxgood_lo [lindex $jaxi 0] -type READ -address 00010810 -force
-run_hw_axi rd_rxgood_lo
-puts "RX good packets  lo (0x10810): [get_property DATA [get_hw_axi_txns rd_rxgood_lo]]"
-
-# 34. Read RX bad FCS
-create_hw_axi_txn rd_rxbadfcs_lo [lindex $jaxi 0] -type READ -address 000108C0 -force
-run_hw_axi rd_rxbadfcs_lo
-puts "RX bad FCS       lo (0x108C0): [get_property DATA [get_hw_axi_txns rd_rxbadfcs_lo]]"
-
+# === Results ===
+set tx_lo [axi_read $jaxi 0x10700]
+set rx_lo [axi_read $jaxi 0x10808]
+puts ""
+puts "TX packets: $tx_lo"
+puts "RX packets: $rx_lo"
+if {$tx_lo == $rx_lo && $tx_lo == 50} {
+    puts "PASS: TX == RX == 50"
+} else {
+    puts "FAIL: TX=$tx_lo RX=$rx_lo (expected 50)"
+}
 puts "--- DONE ---"
-puts "Expected: TX == RX == 50 packets, bad FCS == 0"
-EOF
