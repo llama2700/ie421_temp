@@ -8,8 +8,8 @@ current_hw_device $device
 refresh_hw_device $device
 
 # Flash FPGA
-set_property PROGRAM.FILE {/home/akshim2/gtfwizard_0_gtfmac_ex.bit} $device
-set_property PROBES.FILE {/home/akshim2/gtfwizard_0_gtfmac_ex.ltx} $device
+set_property PROGRAM.FILE "$::env(HOME)/group_05_project/loopback_example/gtfwizard_0_gtfmac_ex.bit" $device
+set_property PROBES.FILE "$::env(HOME)/group_05_project/loopback_example/gtfwizard_0_gtfmac_ex.ltx" $device
 program_hw_devices $device
 puts "Device programmed."
 
@@ -123,6 +123,41 @@ axi_write $jaxi 0x00090 0x00000001
 axi_write $jaxi 0x1040C 0x00000001
 after 100
 
+# =============================================================================
+# ILA SETUP — arm all 3 ILAs before starting traffic
+# =============================================================================
+puts "Setting up ILA captures..."
+
+# Discover ILA cores — names depend on what Vivado assigned
+set ila_list [get_hw_ilas]
+puts "Found ILAs: $ila_list"
+
+# --- ILA 0 (hw_ila_1 / ila_inst — status/reset on freerun_clk) ---
+# Trigger: immediate (capture steady-state status)
+set ila0 [get_hw_ilas hw_ila_1]
+set_property CONTROL.TRIGGER_POSITION 512 $ila0
+set_property CONTROL.DATA_DEPTH 1024 $ila0
+run_hw_ila $ila0
+puts "ILA0 (status) armed."
+
+# --- ILA TX (hw_ila_3 / ila_tx_inst — tx data path on tx_axis_clk) ---
+# Trigger: tx_axis_tvalid == 1
+set ila_tx [get_hw_ilas hw_ila_3]
+set_property CONTROL.TRIGGER_POSITION 512 $ila_tx
+set_property CONTROL.DATA_DEPTH 1024 $ila_tx
+set_property TRIGGER_COMPARE_VALUE eq1'b1 [get_hw_probes tx_axis_tvalid -of $ila_tx]
+run_hw_ila $ila_tx
+puts "ILA TX armed — trigger on tx_axis_tvalid."
+
+# --- ILA RX (hw_ila_2 / ila_rx_inst — rx data path on rx_axis_clk) ---
+# Trigger: rx_axis_tvalid == 1
+set ila_rx [get_hw_ilas hw_ila_2]
+set_property CONTROL.TRIGGER_POSITION 512 $ila_rx
+set_property CONTROL.DATA_DEPTH 1024 $ila_rx
+set_property TRIGGER_COMPARE_VALUE eq1'b1 [get_hw_probes rx_axis_tvalid -of $ila_rx]
+run_hw_ila $ila_rx
+puts "ILA RX armed — trigger on rx_axis_tvalid."
+
 # === Step 27: START generator + monitor ===
 axi_write $jaxi 0x00020 0x00000011
 after 5000
@@ -136,6 +171,37 @@ axi_write $jaxi 0x00090 0x00000001
 axi_write $jaxi 0x1040C 0x00000001
 after 500
 
+# =============================================================================
+# ILA CAPTURE — upload data and export to VCD
+# =============================================================================
+puts "Uploading ILA captures..."
+
+set outdir "$::env(HOME)/group_05_project/loopback_example/ila_captures"
+file mkdir $outdir
+
+set ila0 [get_hw_ilas hw_ila_1]
+wait_on_hw_ila $ila0
+set ila0_data [upload_hw_ila_data $ila0]
+write_hw_ila_data -vcd_file ${outdir}/ila_status.vcd $ila0_data
+write_hw_ila_data -csv_file ${outdir}/ila_status.csv $ila0_data
+puts "ILA0 (status) -> ila_status.vcd / .csv"
+
+set ila_tx [get_hw_ilas hw_ila_3]
+wait_on_hw_ila $ila_tx
+set ilatx_data [upload_hw_ila_data $ila_tx]
+write_hw_ila_data -vcd_file ${outdir}/ila_tx.vcd $ilatx_data
+write_hw_ila_data -csv_file ${outdir}/ila_tx.csv $ilatx_data
+puts "ILA TX -> ila_tx.vcd / .csv"
+
+set ila_rx [get_hw_ilas hw_ila_2]
+wait_on_hw_ila $ila_rx
+set ilarx_data [upload_hw_ila_data $ila_rx]
+write_hw_ila_data -vcd_file ${outdir}/ila_rx.vcd $ilarx_data
+write_hw_ila_data -csv_file ${outdir}/ila_rx.csv $ilarx_data
+puts "ILA RX -> ila_rx.vcd / .csv"
+
+puts "ILA captures saved to $outdir"
+
 # === Results ===
 set tx_lo [axi_read $jaxi 0x10700]
 set rx_lo [axi_read $jaxi 0x10808]
@@ -148,3 +214,4 @@ if {$tx_lo == $rx_lo && $tx_lo == 50} {
     puts "FAIL: TX=$tx_lo RX=$rx_lo (expected 50)"
 }
 puts "--- DONE ---"
+

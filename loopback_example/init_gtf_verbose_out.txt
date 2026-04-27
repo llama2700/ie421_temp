@@ -1,11 +1,13 @@
-Build 5239630 on Fri Nov 08 22:34:34 MST 2024
+
+****** Vivado v2024.2 (64-bit)
+  **** SW Build 5239630 on Fri Nov 08 22:34:34 MST 2024
   **** IP Build 5239520 on Sun Nov 10 16:12:51 MST 2024
   **** SharedData Build 5239561 on Fri Nov 08 14:39:27 MST 2024
-  **** Start of session at: Thu Apr 16 17:21:11 2026
+  **** Start of session at: Thu Apr 23 15:09:07 2026
     ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
     ** Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 
-source traffic_test.tcl
+source init_gtf_verbose.tcl
 # open_hw_manager
 # connect_hw_server
 INFO: [Labtools 27-2285] Connecting to hw_server url TCP:localhost:3121
@@ -17,8 +19,8 @@ INFO: [Labtools 27-2221] Launch Output:
 ******** Xilinx cs_server v2024.2.0
   ****** Build date   : Oct 30 2024-13:19:07
     **** Build number : 2024.2.1730312347
-** Copyright 2017-2022 Xilinx, Inc. All Rights Reserved.
-** Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+      ** Copyright 2017-2022 Xilinx, Inc. All Rights Reserved.
+      ** Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
 
 
 
@@ -29,18 +31,29 @@ INFO: [Labtoolstcl 44-466] Opening hw_target localhost:3121/xilinx_tcf/Xilinx/XF
 # set device [get_hw_devices xcvu2p_0]
 # current_hw_device $device
 # refresh_hw_device $device
-INFO: [Labtools 27-2302] Device xcvu2p (JTAG device index = 0) is programmed with a design that has 1 ILA core(s).
+INFO: [Labtools 27-2302] Device xcvu2p (JTAG device index = 0) is programmed with a design that has 3 ILA core(s).
 INFO: [Labtools 27-2302] Device xcvu2p (JTAG device index = 0) is programmed with a design that has 1 JTAG AXI core(s).
 WARNING: [Labtools 27-1347] Unable to find Debug Probes file []. Please update hw_device property [PROBES.FILE]
  Update of hw_probe objects, will be skipped.
 WARNING: [Labtools 27-1974] Mismatch between the design programmed into the device xcvu2p_0 and the probes file(s) .
-The device design has 1 ILA core(s) and 0 VIO core(s). 0 ILA core(s) and 0 VIO core(s) are matched in the probes file(s).
-Resolution:
+The device design has 3 ILA core(s) and 0 VIO core(s). 0 ILA core(s) and 0 VIO core(s) are matched in the probes file(s).
+Resolution: 
 1. Reprogram device with the correct programming file and associated probes file(s) OR
 2. Goto device properties and associate the correct probes file(s) with the programming file already programmed in the device.
 # set jaxi [get_hw_axis]
 # puts "JTAG-AXI: $jaxi"
 JTAG-AXI: hw_axi_1
+# set_property PROGRAM.FILE "$::env(HOME)/group_05_project/loopback_example/gtfwizard_0_gtfmac_ex.bit" $device
+# set_property PROBES.FILE "$::env(HOME)/group_05_project/loopback_example/gtfwizard_0_gtfmac_ex.ltx" $device
+# program_hw_devices $device
+INFO: [Labtools 27-3164] End of startup status: HIGH
+program_hw_devices: Time (s): cpu = 00:00:32 ; elapsed = 00:00:32 . Memory (MB): peak = 1539.645 ; gain = 9.004 ; free physical = 2758 ; free virtual = 7998
+# puts "Device programmed."
+Device programmed.
+# refresh_hw_device $device
+INFO: [Labtools 27-2302] Device xcvu2p (JTAG device index = 0) is programmed with a design that has 3 ILA core(s).
+INFO: [Labtools 27-2302] Device xcvu2p (JTAG device index = 0) is programmed with a design that has 1 JTAG AXI core(s).
+# set jaxi [get_hw_axis]
 # proc axi_read {jaxi addr} {
 #     set addr_hex [format "%08x" $addr]
 #     create_hw_axi_txn rd_txn [lindex $jaxi 0] -type READ -address $addr_hex -force
@@ -59,19 +72,19 @@ JTAG-AXI: hw_axi_1
 #     axi_write $jaxi $addr $data
 #     set rb [axi_read $jaxi $addr]
 #     if {$rb != $data} {
-#puts "  WARNING: $label readback mismatch! wrote=[format 0x%08x $data] read=[format 0x%08x $rb]"
+#         puts "  WARNING: $label readback mismatch! wrote=[format 0x%08x $data] read=[format 0x%08x $rb]"
 #     } else {
-#puts "  OK: $label verified [format 0x%08x $rb]"
+#         puts "  OK: $label verified [format 0x%08x $rb]"
 #     }
 #     return $rb
 # }
 # proc axi_poll {jaxi addr mask expected {max_attempts 100000} {delay_ms 1}} {
 #     for {set i 0} {$i < $max_attempts} {incr i} {
-#set val [axi_read $jaxi $addr]
-#if {(($val & $mask) == $expected)} {
-#return [list $val $i]
-#}
-#after $delay_ms
+#         set val [axi_read $jaxi $addr]
+#         if {(($val & $mask) == $expected)} {
+#             return [list $val $i]
+#         }
+#         after $delay_ms
 #     }
 #     error "axi_poll timeout: addr=[format 0x%08x $addr] mask=[format 0x%08x $mask] expected=[format 0x%08x $expected] last=[format 0x%08x $val]"
 # }
@@ -85,7 +98,7 @@ JTAG-AXI: hw_axi_1
 # puts "============================================================"
 ============================================================
 # puts " DIAGNOSTIC REGISTER DUMP - PRE-INIT"
-DIAGNOSTIC REGISTER DUMP - PRE-INIT
+ DIAGNOSTIC REGISTER DUMP - PRE-INIT
 # puts "============================================================"
 ============================================================
 # axi_dump $jaxi 0x00000 "HWCHK status"
@@ -154,19 +167,19 @@ INFO: [Labtoolstcl 44-481] READ DATA is: 00000000
 ============================================================
 # axi_dump $jaxi 0x00000 "HWCHK status"
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000000
-  HWCHK status[0x00000] = 0x00000000
+  HWCHK status                             [0x00000] = 0x00000000
 # axi_dump $jaxi 0x00020 "HWCHK gen/mon enable"
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000000
-  HWCHK gen/mon enable[0x00020] = 0x00000000
+  HWCHK gen/mon enable                     [0x00020] = 0x00000000
 # axi_dump $jaxi 0x000A0 "HWCHK block_lock/bitslip"
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000000
-  HWCHK block_lock/bitslip[0x000a0] = 0x00000000
+  HWCHK block_lock/bitslip                 [0x000a0] = 0x00000000
 # axi_dump $jaxi 0x10400 "GTFMAC GT reset"
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000000
-  GTFMAC GT reset[0x10400] = 0x00000000
+  GTFMAC GT reset                          [0x10400] = 0x00000000
 # axi_dump $jaxi 0x10408 "GTFMAC GT loopback"
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000001
-GTFMAC GT loopback[0x10408] = 0x00000001
+  GTFMAC GT loopback                       [0x10408] = 0x00000001
 # puts ""
 
 # puts "=== Step 1: Wait for DUT alive ==="
@@ -180,83 +193,83 @@ DUT alive after 0 attempts (status=0x00000000)
 # axi_write_verify $jaxi 0x0000C 0x00000003 "userrdy"
 INFO: [Labtoolstcl 44-481] WRITE DATA is: 00000003
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000003
-OK: userrdy verified 0x00000003
+  OK: userrdy verified 0x00000003
 # puts "=== Step 3: Loopback ==="
 === Step 3: Loopback ===
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000001
 # set lb_val [axi_read $jaxi 0x10408]
 # puts "  loopback reg before: [format 0x%08x $lb_val]"
-loopback reg before: 0x00000001
+  loopback reg before: 0x00000001
 # set lb_val [expr {($lb_val & 0xFFFFFF8F) | 0x00000020}]
 # axi_write $jaxi 0x10408 $lb_val
 INFO: [Labtoolstcl 44-481] WRITE DATA is: 00000021
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000021
 # set lb_rb [axi_read $jaxi 0x10408]
 # puts "  loopback reg after:  [format 0x%08x $lb_rb]"
-loopback reg after:  0x00000021
+  loopback reg after:  0x00000021
 # puts "=== Step 4-5: RX reset ==="
 === Step 4-5: RX reset ===
 # axi_write $jaxi 0x10400 0x00000002
 INFO: [Labtoolstcl 44-481] WRITE DATA is: 00000002
 # puts "  RX reset asserted"
-RX reset asserted
+  RX reset asserted
 # after 100
 # axi_write $jaxi 0x10400 0x00000000
 INFO: [Labtoolstcl 44-481] WRITE DATA is: 00000000
 # puts "  RX reset deasserted"
-RX reset deasserted
+  RX reset deasserted
 # after 500
 # puts "=== Step 6: GTFMAC data rate ==="
 === Step 6: GTFMAC data rate ===
 # axi_write_verify $jaxi 0x10000 0x00000000 "GTFMAC data_rate"
 INFO: [Labtoolstcl 44-481] WRITE DATA is: 00000000
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000000
-OK: GTFMAC data_rate verified 0x00000000
+  OK: GTFMAC data_rate verified 0x00000000
 # puts "=== Step 7: HWCHK data rate config ==="
 === Step 7: HWCHK data rate config ===
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000000
 # set hwcfg [axi_read $jaxi 0x00010]
 # puts "  HWCHK config before: [format 0x%08x $hwcfg]"
-HWCHK config before: 0x00000000
+  HWCHK config before: 0x00000000
 # set hwcfg [expr {$hwcfg | (0 << 0)}]
 # set hwcfg [expr {$hwcfg | (0 << 16)}]
 # axi_write $jaxi 0x00010 $hwcfg
 INFO: [Labtoolstcl 44-481] WRITE DATA is: 00000000
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000000
 # puts "  HWCHK config after:  [format 0x%08x [axi_read $jaxi 0x00010]]"
-HWCHK config after:  0x00000000
+  HWCHK config after:  0x00000000
 # puts "=== Step 8: Bitslip allow ==="
 === Step 8: Bitslip allow ===
 # axi_write $jaxi 0x000A4 0x00000000
 INFO: [Labtoolstcl 44-481] WRITE DATA is: 00000000
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000000
 # puts "  bitslip_ctrl = [format 0x%08x [axi_read $jaxi 0x000A4]]"
-bitslip_ctrl = 0x00000000
+  bitslip_ctrl = 0x00000000
 # puts "=== Step 9: Block lock ==="
 === Step 9: Block lock ===
-INFO: [Labtoolstcl 44-481] READ DATA is: 0001003a
+INFO: [Labtoolstcl 44-481] READ DATA is: 00010022
 # set result [axi_poll $jaxi 0x000A0 0x00010000 0x00010000]
 # puts "  Block lock after [lindex $result 1] attempts, reg=[format 0x%08x [lindex $result 0]]"
-Block lock after 0 attempts, reg=0x0001003a
+  Block lock after 0 attempts, reg=0x00010022
 # puts "=== Step 10: Bitslip correct ==="
 === Step 10: Bitslip correct ===
 # axi_write $jaxi 0x000A4 0x00000001
 INFO: [Labtoolstcl 44-481] WRITE DATA is: 00000001
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000001
 # puts "  bitslip_ctrl = [format 0x%08x [axi_read $jaxi 0x000A4]]"
-bitslip_ctrl = 0x00000001
+  bitslip_ctrl = 0x00000001
 # puts "=== Step 11: Bitslip done ==="
 === Step 11: Bitslip done ===
-INFO: [Labtoolstcl 44-481] READ DATA is: 00053a3a
+INFO: [Labtoolstcl 44-481] READ DATA is: 00052222
 # set result [axi_poll $jaxi 0x000A0 0x00040000 0x00040000 100 10]
 # puts "  Bitslip done after [lindex $result 1] attempts, reg=[format 0x%08x [lindex $result 0]]"
-Bitslip done after 0 attempts, reg=0x00053a3a
+  Bitslip done after 0 attempts, reg=0x00052222
 # puts "=== Step 12: Block lock re-acquire ==="
 === Step 12: Block lock re-acquire ===
-INFO: [Labtoolstcl 44-481] READ DATA is: 00053a3a
+INFO: [Labtoolstcl 44-481] READ DATA is: 00052222
 # set result [axi_poll $jaxi 0x000A0 0x00010000 0x00010000]
 # puts "  Block lock after [lindex $result 1] attempts, reg=[format 0x%08x [lindex $result 0]]"
-Block lock after 0 attempts, reg=0x00053a3a
+  Block lock after 0 attempts, reg=0x00052222
 # puts "=== Step 12b: Wait for RX buffer bypass ==="
 === Step 12b: Wait for RX buffer bypass ===
 # puts "  Waiting 5 seconds for RX buffer bypass completion..."
@@ -264,85 +277,86 @@ Block lock after 0 attempts, reg=0x00053a3a
 # after 5000
 # axi_dump $jaxi 0x00000 "HWCHK status (post-bypass-wait)"
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000010
-HWCHK status (post-bypass-wait)[0x00000] = 0x00000010
+  HWCHK status (post-bypass-wait)          [0x00000] = 0x00000010
 # axi_dump $jaxi 0x000A0 "HWCHK block_lock (post-bypass-wait)"
-INFO: [Labtoolstcl 44-481] READ DATA is: 00053a3a
-HWCHK block_lock (post-bypass-wait)      [0x000a0] = 0x00053a3a
+INFO: [Labtoolstcl 44-481] READ DATA is: 00052222
+  HWCHK block_lock (post-bypass-wait)      [0x000a0] = 0x00052222
 # puts "=== Step 13: Link up ==="
 === Step 13: Link up ===
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000010
 # set result [axi_poll $jaxi 0x00000 0x00000F00 0x00000000 10000 1]
 # puts "  Link up after [lindex $result 1] attempts (status=[format 0x%08x [lindex $result 0]])"
-Link up after 0 attempts (status=0x00000010)
+  Link up after 0 attempts (status=0x00000010)
 # puts ""
 
 # puts "============================================================"
 ============================================================
 # puts " DIAGNOSTIC REGISTER DUMP - POST-LINK-UP / PRE-CONFIG"
-DIAGNOSTIC REGISTER DUMP - POST-LINK-UP / PRE-CONFIG
+ DIAGNOSTIC REGISTER DUMP - POST-LINK-UP / PRE-CONFIG
 # puts "============================================================"
 ============================================================
 # axi_dump $jaxi 0x00000 "HWCHK status"
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000010
-HWCHK status[0x00000] = 0x00000010
+  HWCHK status                             [0x00000] = 0x00000010
 # axi_dump $jaxi 0x00004 "HWCHK reg 0x004"
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000000
-HWCHK reg 0x004[0x00004] = 0x00000000
+  HWCHK reg 0x004                          [0x00004] = 0x00000000
 # axi_dump $jaxi 0x00008 "HWCHK reg 0x008"
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000000
-HWCHK reg 0x008[0x00008] = 0x00000000
+  HWCHK reg 0x008                          [0x00008] = 0x00000000
 # axi_dump $jaxi 0x0000C "HWCHK userrdy"
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000003
-HWCHK userrdy[0x0000c] = 0x00000003
+  HWCHK userrdy                            [0x0000c] = 0x00000003
 # axi_dump $jaxi 0x00010 "HWCHK config"
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000000
-HWCHK config[0x00010] = 0x00000000
+  HWCHK config                             [0x00010] = 0x00000000
 # axi_dump $jaxi 0x00014 "HWCHK gen_mode"
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000000
-HWCHK gen_mode[0x00014] = 0x00000000
+  HWCHK gen_mode                           [0x00014] = 0x00000000
 # axi_dump $jaxi 0x00018 "HWCHK reg 0x018"
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000000
-HWCHK reg 0x018[0x00018] = 0x00000000
+  HWCHK reg 0x018                          [0x00018] = 0x00000000
 # axi_dump $jaxi 0x0001C "HWCHK reg 0x01C"
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000000
-HWCHK reg 0x01C[0x0001c] = 0x00000000
+  HWCHK reg 0x01C                          [0x0001c] = 0x00000000
 # axi_dump $jaxi 0x00020 "HWCHK gen/mon enable"
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000000
-HWCHK gen/mon enable[0x00020] = 0x00000000
+  HWCHK gen/mon enable                     [0x00020] = 0x00000000
 # axi_dump $jaxi 0x00024 "HWCHK max_frame_len"
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000000
-HWCHK max_frame_len[0x00024] = 0x00000000
+  HWCHK max_frame_len                      [0x00024] = 0x00000000
 # axi_dump $jaxi 0x00028 "HWCHK min_frame_len"
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000000
-HWCHK min_frame_len[0x00028] = 0x00000000
+  HWCHK min_frame_len                      [0x00028] = 0x00000000
 # axi_dump $jaxi 0x0002C "HWCHK frames_to_send"
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000000
-HWCHK frames_to_send[0x0002c] = 0x00000000
+  HWCHK frames_to_send                     [0x0002c] = 0x00000000
 # axi_dump $jaxi 0x000A0 "HWCHK block_lock/bitslip"
-INFO: [Labtoolstcl 44-481] READ DATA is: 00053a3a
-HWCHK block_lock/bitslip[0x000a0] = 0x00053a3a
+INFO: [Labtoolstcl 44-481] READ DATA is: 00052222
+  HWCHK block_lock/bitslip                 [0x000a0] = 0x00052222
 # axi_dump $jaxi 0x10000 "GTFMAC data_rate"
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000000
-GTFMAC data_rate[0x10000] = 0x00000000
+  GTFMAC data_rate                         [0x10000] = 0x00000000
 # axi_dump $jaxi 0x10004 "GTFMAC TX config"
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000c05
-GTFMAC TX config[0x10004] = 0x00000c05
+  GTFMAC TX config                         [0x10004] = 0x00000c05
 # axi_dump $jaxi 0x10008 "GTFMAC RX config"
 INFO: [Labtoolstcl 44-481] READ DATA is: 000000c7
-GTFMAC RX config[0x10008] = 0x000000c7
+  GTFMAC RX config                         [0x10008] = 0x000000c7
 # axi_dump $jaxi 0x1000C "GTFMAC RX min pkt"
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000040
-GTFMAC RX min pkt[0x1000c] = 0x00000040
+  GTFMAC RX min pkt                        [0x1000c] = 0x00000040
 # axi_dump $jaxi 0x10010 "GTFMAC RX max pkt"
-INFO: [Labtoolstcl 44-481] READ DATA is: 00003580
-GTFMAC RX max pkt[0x10010] = 0x00003580
+INFO: [Labtoolstcl 44-481] READ DATA is: 00002580
+  GTFMAC RX max pkt                        [0x10010] = 0x00002580
 # puts ""
+
 # puts "=== Step 14: TX config ==="
 === Step 14: TX config ===
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000c05
 # set txcfg [axi_read $jaxi 0x10004]
 # puts "  TX config before: [format 0x%08x $txcfg] (binary: [format %032b $txcfg])"
-TX config before: 0x00000c05 (binary: 00000000000000000000110000000101)
+  TX config before: 0x00000c05 (binary: 00000000000000000000110000000101)
 # set txcfg [expr {$txcfg & 0xFFFFE0F1}]
 # set txcfg [expr {$txcfg | (1 << 1)}]
 # set txcfg [expr {$txcfg | (0 << 2)}]
@@ -354,13 +368,13 @@ INFO: [Labtoolstcl 44-481] WRITE DATA is: 00000803
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000803
 # set txcfg_rb [axi_read $jaxi 0x10004]
 # puts "  TX config after:  [format 0x%08x $txcfg_rb] (binary: [format %032b $txcfg_rb])"
-TX config after:  0x00000803 (binary: 00000000000000000000100000000011)
+  TX config after:  0x00000803 (binary: 00000000000000000000100000000011)
 # puts "=== Step 15: RX config ==="
 === Step 15: RX config ===
 INFO: [Labtoolstcl 44-481] READ DATA is: 000000c7
 # set rxcfg [axi_read $jaxi 0x10008]
 # puts "  RX config before: [format 0x%08x $rxcfg] (binary: [format %032b $rxcfg])"
-RX config before: 0x000000c7 (binary: 00000000000000000000000011000111)
+  RX config before: 0x000000c7 (binary: 00000000000000000000000011000111)
 # set rxcfg [expr {$rxcfg & 0xFFFFFF9B}]
 # set rxcfg [expr {$rxcfg | (0 << 2)}]
 # set rxcfg [expr {$rxcfg | (0 << 5)}]
@@ -370,23 +384,23 @@ INFO: [Labtoolstcl 44-481] WRITE DATA is: 00000083
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000083
 # set rxcfg_rb [axi_read $jaxi 0x10008]
 # puts "  RX config after:  [format 0x%08x $rxcfg_rb] (binary: [format %032b $rxcfg_rb])"
-RX config after:  0x00000083 (binary: 00000000000000000000000010000011)
+  RX config after:  0x00000083 (binary: 00000000000000000000000010000011)
 # puts "=== Step 16-17: Packet lengths ==="
 === Step 16-17: Packet lengths ===
 # axi_write_verify $jaxi 0x1000C 0x00000040 "min_pkt_len"
 INFO: [Labtoolstcl 44-481] WRITE DATA is: 00000040
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000040
-OK: min_pkt_len verified 0x00000040
+  OK: min_pkt_len verified 0x00000040
 # axi_write_verify $jaxi 0x10010 0x000005DC "max_pkt_len"
 INFO: [Labtoolstcl 44-481] WRITE DATA is: 000005dc
 INFO: [Labtoolstcl 44-481] READ DATA is: 000005dc
-OK: max_pkt_len verified 0x000005dc
+  OK: max_pkt_len verified 0x000005dc
 # puts "=== Step 18: HWCHK config (fcs/preamble) ==="
 === Step 18: HWCHK config (fcs/preamble) ===
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000000
 # set hwcfg [axi_read $jaxi 0x00010]
 # puts "  HWCHK config before: [format 0x%08x $hwcfg]"
-HWCHK config before: 0x00000000
+  HWCHK config before: 0x00000000
 # set hwcfg [expr {$hwcfg | (1 << 4)}]
 # set hwcfg [expr {$hwcfg | (0 << 8)}]
 # set hwcfg [expr {$hwcfg | (0 << 12)}]
@@ -395,49 +409,49 @@ HWCHK config before: 0x00000000
 INFO: [Labtoolstcl 44-481] WRITE DATA is: 00000010
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000010
 # puts "  HWCHK config after:  [format 0x%08x [axi_read $jaxi 0x00010]]"
-HWCHK config after:  0x00000010
+  HWCHK config after:  0x00000010
 # puts "=== Step 19-20: Injection ==="
 === Step 19-20: Injection ===
 # axi_write_verify $jaxi 0x00040 0x00000000 "err_inj"
 INFO: [Labtoolstcl 44-481] WRITE DATA is: 00000000
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000000
-OK: err_inj verified 0x00000000
+  OK: err_inj verified 0x00000000
 # axi_write_verify $jaxi 0x00098 0x00000000 "poison_inj"
 INFO: [Labtoolstcl 44-481] WRITE DATA is: 00000000
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000000
-OK: poison_inj verified 0x00000000
+  OK: poison_inj verified 0x00000000
 # puts "=== Step 21-22: Frame lengths ==="
 === Step 21-22: Frame lengths ===
 # axi_write_verify $jaxi 0x00028 0x00000040 "hwchk_min_frame"
 INFO: [Labtoolstcl 44-481] WRITE DATA is: 00000040
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000040
-OK: hwchk_min_frame verified 0x00000040
+  OK: hwchk_min_frame verified 0x00000040
 # axi_write_verify $jaxi 0x00024 0x000005DC "hwchk_max_frame"
 INFO: [Labtoolstcl 44-481] WRITE DATA is: 000005dc
 INFO: [Labtoolstcl 44-481] READ DATA is: 000005dc
-OK: hwchk_max_frame verified 0x000005dc
+  OK: hwchk_max_frame verified 0x000005dc
 # puts "=== Step 23: Gen mode ==="
 === Step 23: Gen mode ===
 # axi_write_verify $jaxi 0x00014 0x00000000 "gen_mode"
 INFO: [Labtoolstcl 44-481] WRITE DATA is: 00000000
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000000
-OK: gen_mode verified 0x00000000
+  OK: gen_mode verified 0x00000000
 # puts "=== Step 24: Frames to send ==="
 === Step 24: Frames to send ===
 # axi_write_verify $jaxi 0x0002C 0x00000032 "frames_to_send"
 INFO: [Labtoolstcl 44-481] WRITE DATA is: 00000032
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000032
-OK: frames_to_send verified 0x00000032
+  OK: frames_to_send verified 0x00000032
 # puts "=== Step 25-26: Init stats ==="
 === Step 25-26: Init stats ===
 # axi_write $jaxi 0x00090 0x00000001
 INFO: [Labtoolstcl 44-481] WRITE DATA is: 00000001
 # puts "  HWCHK stats tick (init)"
-HWCHK stats tick (init)
+  HWCHK stats tick (init)
 # axi_write $jaxi 0x1040C 0x00000001
 INFO: [Labtoolstcl 44-481] WRITE DATA is: 00000001
 # puts "  GTFMAC stats tick (init)"
-GTFMAC stats tick (init)
+  GTFMAC stats tick (init)
 # after 100
 # puts ""
 
@@ -449,46 +463,73 @@ GTFMAC stats tick (init)
 ============================================================
 # axi_dump $jaxi 0x00000 "HWCHK status"
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000010
-  HWCHK status[0x00000] = 0x00000010
+  HWCHK status                             [0x00000] = 0x00000010
 # axi_dump $jaxi 0x00010 "HWCHK config"
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000010
-  HWCHK config[0x00010] = 0x00000010
+  HWCHK config                             [0x00010] = 0x00000010
 # axi_dump $jaxi 0x00014 "HWCHK gen_mode"
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000000
-  HWCHK gen_mode[0x00014] = 0x00000000
+  HWCHK gen_mode                           [0x00014] = 0x00000000
 # axi_dump $jaxi 0x00020 "HWCHK gen/mon enable"
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000000
-  HWCHK gen/mon enable[0x00020] = 0x00000000
+  HWCHK gen/mon enable                     [0x00020] = 0x00000000
 # axi_dump $jaxi 0x00024 "HWCHK max_frame_len"
 INFO: [Labtoolstcl 44-481] READ DATA is: 000005dc
-  HWCHK max_frame_len[0x00024] = 0x000005dc
+  HWCHK max_frame_len                      [0x00024] = 0x000005dc
 # axi_dump $jaxi 0x00028 "HWCHK min_frame_len"
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000040
-  HWCHK min_frame_len[0x00028] = 0x00000040
+  HWCHK min_frame_len                      [0x00028] = 0x00000040
 # axi_dump $jaxi 0x0002C "HWCHK frames_to_send"
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000032
-  HWCHK frames_to_send[0x0002c] = 0x00000032
+  HWCHK frames_to_send                     [0x0002c] = 0x00000032
 # axi_dump $jaxi 0x00040 "HWCHK err_inj"
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000000
-  HWCHK err_inj[0x00040] = 0x00000000
+  HWCHK err_inj                            [0x00040] = 0x00000000
 # axi_dump $jaxi 0x00098 "HWCHK poison_inj"
 INFO: [Labtoolstcl 44-481] READ DATA is: 00000000
-  HWCHK poison_inj[0x00098] = 0x00000000
+  HWCHK poison_inj                         [0x00098] = 0x00000000
 # axi_dump $jaxi 0x000A0 "HWCHK block_lock/bitslip"
-INFO: [Labtoolstcl 44-481] READ DATA is: 00053a3a
-INFO: [Common 17-14] Message 'Labtoolstcl 44-481' appears 100 times and further instances of t
-he messages will be disabled. Use the Tcl command set_msg_config to change the current setting
-s.
-  # axi_dump $jaxi 0x10004 "GTFMAC TX config"
-  GTFMAC TX config[0x10004] = 0x00000803
+INFO: [Labtoolstcl 44-481] READ DATA is: 00052222
+INFO: [Common 17-14] Message 'Labtoolstcl 44-481' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+  HWCHK block_lock/bitslip                 [0x000a0] = 0x00052222
+# axi_dump $jaxi 0x10004 "GTFMAC TX config"
+  GTFMAC TX config                         [0x10004] = 0x00000803
 # axi_dump $jaxi 0x10008 "GTFMAC RX config"
-  GTFMAC RX config[0x10008] = 0x00000083
+  GTFMAC RX config                         [0x10008] = 0x00000083
 # axi_dump $jaxi 0x1000C "GTFMAC RX min pkt"
-  GTFMAC RX min pkt[0x1000c] = 0x00000040
+  GTFMAC RX min pkt                        [0x1000c] = 0x00000040
 # axi_dump $jaxi 0x10010 "GTFMAC RX max pkt"
-  GTFMAC RX max pkt[0x10010] = 0x000005dc
+  GTFMAC RX max pkt                        [0x10010] = 0x000005dc
 # puts ""
 
+# puts "Setting up ILA captures..."
+Setting up ILA captures...
+# set ila_list [get_hw_ilas]
+# puts "Found ILAs: $ila_list"
+Found ILAs: hw_ila_1 hw_ila_2 hw_ila_3
+# set ila0 [get_hw_ilas hw_ila_1]
+# set_property CONTROL.TRIGGER_POSITION 512 $ila0
+# set_property CONTROL.DATA_DEPTH 1024 $ila0
+# run_hw_ila $ila0
+INFO: [Labtools 27-1964] The ILA core 'hw_ila_1' trigger was armed at 2026-Apr-23 15:09:58
+# puts "ILA0 (status) armed."
+ILA0 (status) armed.
+# set ila_tx [get_hw_ilas hw_ila_3]
+# set_property CONTROL.TRIGGER_POSITION 512 $ila_tx
+# set_property CONTROL.DATA_DEPTH 1024 $ila_tx
+# set_property TRIGGER_COMPARE_VALUE eq1'b1 [get_hw_probes tx_axis_tvalid -of $ila_tx]
+# run_hw_ila $ila_tx
+INFO: [Labtools 27-1964] The ILA core 'hw_ila_3' trigger was armed at 2026-Apr-23 15:09:58
+# puts "ILA TX armed — trigger on tx_axis_tvalid."
+ILA TX armed — trigger on tx_axis_tvalid.
+# set ila_rx [get_hw_ilas hw_ila_2]
+# set_property CONTROL.TRIGGER_POSITION 512 $ila_rx
+# set_property CONTROL.DATA_DEPTH 1024 $ila_rx
+# set_property TRIGGER_COMPARE_VALUE eq1'b1 [get_hw_probes rx_axis_tvalid -of $ila_rx]
+# run_hw_ila $ila_rx
+INFO: [Labtools 27-1964] The ILA core 'hw_ila_2' trigger was armed at 2026-Apr-23 15:09:58
+# puts "ILA RX armed — trigger on rx_axis_tvalid."
+ILA RX armed — trigger on rx_axis_tvalid.
 # puts "=== Step 27: START generator ==="
 === Step 27: START generator ===
 # puts "  Writing 0x11 to gen/mon enable (0x20)..."
@@ -500,118 +541,118 @@ s.
 # if {($gen_rb & 0x11) != 0x11} {
 #     puts "  WARNING: gen_en or mon_en did not latch!"
 # }
-WARNING: gen_en or mon_en did not latch!
+  WARNING: gen_en or mon_en did not latch!
 # puts "  Waiting 1 second..."
-Waiting 1 second...
+  Waiting 1 second...
 # after 1000
 # puts "  --- Mid-traffic snapshot ---"
---- Mid-traffic snapshot ---
+  --- Mid-traffic snapshot ---
 # axi_dump $jaxi 0x00000 "HWCHK status (mid-traffic)"
-HWCHK status (mid-traffic)[0x00000] = 0x00000010
+  HWCHK status (mid-traffic)               [0x00000] = 0x00000010
 # axi_dump $jaxi 0x00020 "HWCHK gen/mon enable (mid-traffic)"
-HWCHK gen/mon enable (mid-traffic)[0x00020] = 0x00000010
+  HWCHK gen/mon enable (mid-traffic)       [0x00020] = 0x00000010
 # axi_dump $jaxi 0x00030 "HWCHK reg 0x030"
-HWCHK reg 0x030[0x00030] = 0x55555555
+  HWCHK reg 0x030                          [0x00030] = 0x55555555
 # axi_dump $jaxi 0x00034 "HWCHK reg 0x034"
-HWCHK reg 0x034[0x00034] = 0xd5555555
+  HWCHK reg 0x034                          [0x00034] = 0xd5555555
 # axi_dump $jaxi 0x00038 "HWCHK reg 0x038"
-HWCHK reg 0x038[0x00038] = 0x55555555
+  HWCHK reg 0x038                          [0x00038] = 0x55555555
 # axi_dump $jaxi 0x0003C "HWCHK reg 0x03C"
-HWCHK reg 0x03C[0x0003c] = 0xd5555555
+  HWCHK reg 0x03C                          [0x0003c] = 0xd5555555
 # axi_dump $jaxi 0x000A0 "HWCHK block_lock (mid-traffic)"
-HWCHK block_lock (mid-traffic)[0x000a0] = 0x00053a3a
+  HWCHK block_lock (mid-traffic)           [0x000a0] = 0x00052222
 # puts "  Waiting 4 more seconds..."
-Waiting 4 more seconds...
+  Waiting 4 more seconds...
 # after 4000
 # puts "  --- Post-traffic snapshot (gen still on) ---"
   --- Post-traffic snapshot (gen still on) ---
 # axi_dump $jaxi 0x00000 "HWCHK status (post-wait)"
-HWCHK status (post-wait)[0x00000] = 0x00000010
+  HWCHK status (post-wait)                 [0x00000] = 0x00000010
 # axi_dump $jaxi 0x00020 "HWCHK gen/mon enable (post-wait)"
-HWCHK gen/mon enable (post-wait)[0x00020] = 0x00000010
+  HWCHK gen/mon enable (post-wait)         [0x00020] = 0x00000010
 # puts "=== Step 28: STOP generator ==="
 === Step 28: STOP generator ===
 # axi_write $jaxi 0x00020 0x00000000
 # puts "  gen/mon stopped: [format 0x%08x [axi_read $jaxi 0x00020]]"
-gen/mon stopped: 0x00000000
+  gen/mon stopped: 0x00000000
 # after 1000
 # puts "=== Step 29-30: Tick stats ==="
 === Step 29-30: Tick stats ===
 # axi_write $jaxi 0x00090 0x00000001
 # puts "  HWCHK stats ticked"
-HWCHK stats ticked
+  HWCHK stats ticked
 # axi_write $jaxi 0x1040C 0x00000001
 # puts "  GTFMAC stats ticked"
-GTFMAC stats ticked
+  GTFMAC stats ticked
 # after 500
 # puts ""
 
 # puts "============================================================"
 ============================================================
 # puts " GTFMAC MAC STATISTICS"
-GTFMAC MAC STATISTICS
+ GTFMAC MAC STATISTICS
 # puts "============================================================"
 ============================================================
 # axi_dump $jaxi 0x10500 "status_rx_cycle_count_lo"
-status_rx_cycle_count_lo[0x10500] = 0xf01e1594
+  status_rx_cycle_count_lo                 [0x10500] = 0xf18cac9d
 # axi_dump $jaxi 0x10504 "status_rx_cycle_count_hi"
-status_rx_cycle_count_hi[0x10504] = 0x00000000
+  status_rx_cycle_count_hi                 [0x10504] = 0x00000000
 # axi_dump $jaxi 0x10508 "status_tx_cycle_count_lo"
-status_tx_cycle_count_lo[0x10508] = 0xf01e1594
+  status_tx_cycle_count_lo                 [0x10508] = 0xf18cac9d
 # axi_dump $jaxi 0x1050C "status_tx_cycle_count_hi"
-status_tx_cycle_count_hi[0x1050c] = 0x00000000
+  status_tx_cycle_count_hi                 [0x1050c] = 0x00000000
 # axi_dump $jaxi 0x10648 "stat_rx_framing_err_lo"
-stat_rx_framing_err_lo[0x10648] = 0x00000000
+  stat_rx_framing_err_lo                   [0x10648] = 0x00000000
 # axi_dump $jaxi 0x1064C "stat_rx_framing_err_hi"
-stat_rx_framing_err_hi[0x1064c] = 0x00000000
+  stat_rx_framing_err_hi                   [0x1064c] = 0x00000000
 # axi_dump $jaxi 0x10660 "stat_rx_bad_code_lo"
-stat_rx_bad_code_lo[0x10660] = 0x00000000
+  stat_rx_bad_code_lo                      [0x10660] = 0x00000000
 # axi_dump $jaxi 0x10664 "stat_rx_bad_code_hi"
-stat_rx_bad_code_hi[0x10664] = 0x00000000
+  stat_rx_bad_code_hi                      [0x10664] = 0x00000000
 # axi_dump $jaxi 0x106A0 "stat_tx_frame_error_lo"
-stat_tx_frame_error_lo[0x106a0] = 0x00000000
+  stat_tx_frame_error_lo                   [0x106a0] = 0x00000000
 # axi_dump $jaxi 0x106A4 "stat_tx_frame_error_hi"
-stat_tx_frame_error_hi[0x106a4] = 0x00000000
+  stat_tx_frame_error_hi                   [0x106a4] = 0x00000000
 # axi_dump $jaxi 0x10700 "stat_tx_total_packets_lo"
-stat_tx_total_packets_lo[0x10700] = 0x00000032
+  stat_tx_total_packets_lo                 [0x10700] = 0x00000032
 # axi_dump $jaxi 0x10704 "stat_tx_total_packets_hi"
-stat_tx_total_packets_hi[0x10704] = 0x00000000
+  stat_tx_total_packets_hi                 [0x10704] = 0x00000000
 # axi_dump $jaxi 0x10708 "stat_tx_total_good_packets_lo"
-stat_tx_total_good_packets_lo[0x10708] = 0x00000032
+  stat_tx_total_good_packets_lo            [0x10708] = 0x00000032
 # axi_dump $jaxi 0x1070C "stat_tx_total_good_packets_hi"
-stat_tx_total_good_packets_hi[0x1070c] = 0x00000000
+  stat_tx_total_good_packets_hi            [0x1070c] = 0x00000000
 # axi_dump $jaxi 0x10710 "stat_tx_total_bytes_lo"
-stat_tx_total_bytes_lo[0x10710] = 0x00008d9d
+  stat_tx_total_bytes_lo                   [0x10710] = 0x0000804b
 # axi_dump $jaxi 0x10714 "stat_tx_total_bytes_hi"
-stat_tx_total_bytes_hi[0x10714] = 0x00000000
+  stat_tx_total_bytes_hi                   [0x10714] = 0x00000000
 # axi_dump $jaxi 0x10718 "stat_tx_total_good_bytes_lo"
-stat_tx_total_good_bytes_lo[0x10718] = 0x00008d9d
+  stat_tx_total_good_bytes_lo              [0x10718] = 0x0000804b
 # axi_dump $jaxi 0x1071C "stat_tx_total_good_bytes_hi"
-stat_tx_total_good_bytes_hi[0x1071c] = 0x00000000
+  stat_tx_total_good_bytes_hi              [0x1071c] = 0x00000000
 # axi_dump $jaxi 0x10808 "stat_rx_total_packets_lo"
-stat_rx_total_packets_lo[0x10808] = 0x00000032
+  stat_rx_total_packets_lo                 [0x10808] = 0x00000032
 # axi_dump $jaxi 0x1080C "stat_rx_total_packets_hi"
-stat_rx_total_packets_hi[0x1080c] = 0x00000000
+  stat_rx_total_packets_hi                 [0x1080c] = 0x00000000
 # axi_dump $jaxi 0x10810 "stat_rx_total_good_packets_lo"
-stat_rx_total_good_packets_lo[0x10810] = 0x00000032
+  stat_rx_total_good_packets_lo            [0x10810] = 0x00000032
 # axi_dump $jaxi 0x10814 "stat_rx_total_good_packets_hi"
-stat_rx_total_good_packets_hi[0x10814] = 0x00000000
+  stat_rx_total_good_packets_hi            [0x10814] = 0x00000000
 # axi_dump $jaxi 0x10818 "stat_rx_total_bytes_lo"
-stat_rx_total_bytes_lo[0x10818] = 0x00008d9d
+  stat_rx_total_bytes_lo                   [0x10818] = 0x0000804b
 # axi_dump $jaxi 0x1081C "stat_rx_total_bytes_hi"
-stat_rx_total_bytes_hi[0x1081c] = 0x00000000
+  stat_rx_total_bytes_hi                   [0x1081c] = 0x00000000
 # axi_dump $jaxi 0x10820 "stat_rx_total_good_bytes_lo"
-stat_rx_total_good_bytes_lo[0x10820] = 0x00008d9d
+  stat_rx_total_good_bytes_lo              [0x10820] = 0x0000804b
 # axi_dump $jaxi 0x10824 "stat_rx_total_good_bytes_hi"
-stat_rx_total_good_bytes_hi[0x10824] = 0x00000000
+  stat_rx_total_good_bytes_hi              [0x10824] = 0x00000000
 # axi_dump $jaxi 0x108C0 "stat_rx_bad_fcs_lo"
-stat_rx_bad_fcs_lo[0x108c0] = 0x00000000
+  stat_rx_bad_fcs_lo                       [0x108c0] = 0x00000000
 # axi_dump $jaxi 0x108C4 "stat_rx_bad_fcs_hi"
-stat_rx_bad_fcs_hi[0x108c4] = 0x00000000
+  stat_rx_bad_fcs_hi                       [0x108c4] = 0x00000000
 # axi_dump $jaxi 0x108D0 "stat_rx_stomped_fcs_lo"
-stat_rx_stomped_fcs_lo[0x108d0] = 0x00000000
+  stat_rx_stomped_fcs_lo                   [0x108d0] = 0x00000000
 # axi_dump $jaxi 0x108D4 "stat_rx_stomped_fcs_hi"
-  stat_rx_stomped_fcs_hi[0x108d4] = 0x00000000
+  stat_rx_stomped_fcs_hi                   [0x108d4] = 0x00000000
 # puts ""
 
 # puts "============================================================"
@@ -623,71 +664,101 @@ stat_rx_stomped_fcs_lo[0x108d0] = 0x00000000
 # for {set a 0x00} {$a <= 0xC0} {set a [expr {$a + 4}]} {
 #     axi_dump $jaxi $a "HWCHK [format 0x%03x $a]"
 # }
-  HWCHK 0x000[0x00000] = 0x00000010
-  HWCHK 0x004[0x00004] = 0x00000000
-  HWCHK 0x008[0x00008] = 0x00000000
-  HWCHK 0x00c[0x0000c] = 0x00000003
-  HWCHK 0x010[0x00010] = 0x00000010
-  HWCHK 0x014[0x00014] = 0x00000000
-  HWCHK 0x018[0x00018] = 0x00000000
-  HWCHK 0x01c[0x0001c] = 0x00000000
-  HWCHK 0x020[0x00020] = 0x00000000
-  HWCHK 0x024[0x00024] = 0x000005dc
-  HWCHK 0x028[0x00028] = 0x00000040
-  HWCHK 0x02c[0x0002c] = 0x00000032
-  HWCHK 0x030[0x00030] = 0x55555555
-  HWCHK 0x034[0x00034] = 0xd5555555
-  HWCHK 0x038[0x00038] = 0x55555555
-  HWCHK 0x03c[0x0003c] = 0xd5555555
-  HWCHK 0x040[0x00040] = 0x00000000
-  HWCHK 0x044[0x00044] = 0x00000000
-HWCHK 0x048[0x00048] = 0x00000000
-HWCHK 0x04c[0x0004c] = 0x00000000
-HWCHK 0x050[0x00050] = 0x00000000
-HWCHK 0x054[0x00054] = 0x00000000
-HWCHK 0x058[0x00058] = 0x00000000
-HWCHK 0x05c[0x0005c] = 0x00000000
-HWCHK 0x060[0x00060] = 0x00000000
-HWCHK 0x064[0x00064] = 0x00000000
-HWCHK 0x068[0x00068] = 0x00000000
-HWCHK 0x06c[0x0006c] = 0x00000000
-HWCHK 0x070[0x00070] = 0x00000000
-HWCHK 0x074[0x00074] = 0x00000000
-HWCHK 0x078[0x00078] = 0x00000000
-HWCHK 0x07c[0x0007c] = 0x00000000
-HWCHK 0x080[0x00080] = 0x00000000
-HWCHK 0x084[0x00084] = 0x00000000
-HWCHK 0x088[0x00088] = 0x00000000
-HWCHK 0x08c[0x0008c] = 0x00000000
-HWCHK 0x090[0x00090] = 0x00000000
-HWCHK 0x094[0x00094] = 0x00000000
-HWCHK 0x098[0x00098] = 0x00000000
-HWCHK 0x09c[0x0009c] = 0x00000000
-HWCHK 0x0a0[0x000a0] = 0x00053a3a
-HWCHK 0x0a4[0x000a4] = 0x00000001
-HWCHK 0x0a8[0x000a8] = 0x00000000
-HWCHK 0x0ac[0x000ac] = 0x00000000
-HWCHK 0x0b0[0x000b0] = 0x00000000
-HWCHK 0x0b4[0x000b4] = 0x00000000
-HWCHK 0x0b8[0x000b8] = 0x00000000
-HWCHK 0x0bc[0x000bc] = 0x00000000
-HWCHK 0x0c0[0x000c0] = 0x00000000
+  HWCHK 0x000                              [0x00000] = 0x00000010
+  HWCHK 0x004                              [0x00004] = 0x00000000
+  HWCHK 0x008                              [0x00008] = 0x00000000
+  HWCHK 0x00c                              [0x0000c] = 0x00000003
+  HWCHK 0x010                              [0x00010] = 0x00000010
+  HWCHK 0x014                              [0x00014] = 0x00000000
+  HWCHK 0x018                              [0x00018] = 0x00000000
+  HWCHK 0x01c                              [0x0001c] = 0x00000000
+  HWCHK 0x020                              [0x00020] = 0x00000000
+  HWCHK 0x024                              [0x00024] = 0x000005dc
+  HWCHK 0x028                              [0x00028] = 0x00000040
+  HWCHK 0x02c                              [0x0002c] = 0x00000032
+  HWCHK 0x030                              [0x00030] = 0x55555555
+  HWCHK 0x034                              [0x00034] = 0xd5555555
+  HWCHK 0x038                              [0x00038] = 0x55555555
+  HWCHK 0x03c                              [0x0003c] = 0xd5555555
+  HWCHK 0x040                              [0x00040] = 0x00000000
+  HWCHK 0x044                              [0x00044] = 0x00000000
+  HWCHK 0x048                              [0x00048] = 0x00000000
+  HWCHK 0x04c                              [0x0004c] = 0x00000000
+  HWCHK 0x050                              [0x00050] = 0x00000000
+  HWCHK 0x054                              [0x00054] = 0x00000000
+  HWCHK 0x058                              [0x00058] = 0x00000000
+  HWCHK 0x05c                              [0x0005c] = 0x00000000
+  HWCHK 0x060                              [0x00060] = 0x00000000
+  HWCHK 0x064                              [0x00064] = 0x00000000
+  HWCHK 0x068                              [0x00068] = 0x00000000
+  HWCHK 0x06c                              [0x0006c] = 0x00000000
+  HWCHK 0x070                              [0x00070] = 0x00000000
+  HWCHK 0x074                              [0x00074] = 0x00000000
+  HWCHK 0x078                              [0x00078] = 0x00000000
+  HWCHK 0x07c                              [0x0007c] = 0x00000000
+  HWCHK 0x080                              [0x00080] = 0x00000000
+  HWCHK 0x084                              [0x00084] = 0x00000000
+  HWCHK 0x088                              [0x00088] = 0x00000000
+  HWCHK 0x08c                              [0x0008c] = 0x00000000
+  HWCHK 0x090                              [0x00090] = 0x00000000
+  HWCHK 0x094                              [0x00094] = 0x00000000
+  HWCHK 0x098                              [0x00098] = 0x00000000
+  HWCHK 0x09c                              [0x0009c] = 0x00000000
+  HWCHK 0x0a0                              [0x000a0] = 0x00052222
+  HWCHK 0x0a4                              [0x000a4] = 0x00000001
+  HWCHK 0x0a8                              [0x000a8] = 0x00000000
+  HWCHK 0x0ac                              [0x000ac] = 0x00000000
+  HWCHK 0x0b0                              [0x000b0] = 0x00000000
+  HWCHK 0x0b4                              [0x000b4] = 0x00000000
+  HWCHK 0x0b8                              [0x000b8] = 0x00000000
+  HWCHK 0x0bc                              [0x000bc] = 0x00000000
+  HWCHK 0x0c0                              [0x000c0] = 0x00000000
 # puts ""
 
 # puts "============================================================"
 ============================================================
 # puts " FINAL STATUS"
-FINAL STATUS
+ FINAL STATUS
 # puts "============================================================"
 ============================================================
 # axi_dump $jaxi 0x00000 "HWCHK status (final)"
-HWCHK status (final)[0x00000] = 0x00000010
+  HWCHK status (final)                     [0x00000] = 0x00000010
 # axi_dump $jaxi 0x000A0 "HWCHK block_lock (final)"
-HWCHK block_lock (final)[0x000a0] = 0x00053a3a
+  HWCHK block_lock (final)                 [0x000a0] = 0x00052222
 # axi_dump $jaxi 0x10004 "GTFMAC TX config (final)"
-GTFMAC TX config (final)[0x10004] = 0x00000803
+  GTFMAC TX config (final)                 [0x10004] = 0x00000803
 # axi_dump $jaxi 0x10008 "GTFMAC RX config (final)"
-GTFMAC RX config (final)[0x10008] = 0x00000083
+  GTFMAC RX config (final)                 [0x10008] = 0x00000083
+# puts "Uploading ILA captures..."
+Uploading ILA captures...
+# set outdir "$::env(HOME)/group_05_project/loopback_example/ila_captures"
+# file mkdir $outdir
+# set ila0 [get_hw_ilas hw_ila_1]
+# wait_on_hw_ila $ila0
+INFO: [Labtools 27-1966] The ILA core 'hw_ila_1' triggered at 2026-Apr-23 15:09:58
+# set ila0_data [upload_hw_ila_data $ila0]
+# write_hw_ila_data -force -vcd_file ${outdir}/ila_status.vcd $ila0_data
+# write_hw_ila_data -force -csv_file ${outdir}/ila_status.csv $ila0_data
+# puts "ILA0 (status) -> ila_status.vcd / .csv"
+ILA0 (status) -> ila_status.vcd / .csv
+# set ila_tx [get_hw_ilas hw_ila_3]
+# wait_on_hw_ila $ila_tx
+INFO: [Labtools 27-1966] The ILA core 'hw_ila_3' triggered at 2026-Apr-23 15:09:58
+# set ilatx_data [upload_hw_ila_data $ila_tx]
+# write_hw_ila_data -force -vcd_file ${outdir}/ila_tx.vcd $ilatx_data
+# write_hw_ila_data -force -csv_file ${outdir}/ila_tx.csv $ilatx_data
+# puts "ILA TX -> ila_tx.vcd / .csv"
+ILA TX -> ila_tx.vcd / .csv
+# set ila_rx [get_hw_ilas hw_ila_2]
+# wait_on_hw_ila $ila_rx
+INFO: [Labtools 27-1966] The ILA core 'hw_ila_2' triggered at 2026-Apr-23 15:09:58
+# set ilarx_data [upload_hw_ila_data $ila_rx]
+# write_hw_ila_data -force -vcd_file ${outdir}/ila_rx.vcd $ilarx_data
+# write_hw_ila_data -force -csv_file ${outdir}/ila_rx.csv $ilarx_data
+# puts "ILA RX -> ila_rx.vcd / .csv"
+ILA RX -> ila_rx.vcd / .csv
+# puts "ILA captures saved to $outdir"
+ILA captures saved to /home/akshim2/group_05_project/loopback_example/ila_captures
 # set tx_lo [axi_read $jaxi 0x10700]
 # set rx_lo [axi_read $jaxi 0x10808]
 # puts ""
@@ -703,4 +774,4 @@ GTFMAC RX config (final)[0x10008] = 0x00000083
 PASS: TX == RX == 50
 # puts "--- DONE ---"
 --- DONE ---
-INFO: [Common 17-206] Exiting Vivado at Mon Apr 20 13:10:13 2026...
+INFO: [Common 17-206] Exiting Vivado at Thu Apr 23 15:10:05 2026...
