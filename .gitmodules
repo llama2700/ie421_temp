@@ -1,3 +1,6 @@
 [submodule "rtl/lib/corundum"]
 	path = rtl/lib/corundum
 	url = git@github.com:corundum/corundum.git
+[submodule "rtl/lib/ethtool"]
+	path = rtl/lib/ethtool
+	url = https://github.com/serhepopovych/ethtool.git
