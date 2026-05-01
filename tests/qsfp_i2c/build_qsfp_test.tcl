@@ -2,7 +2,7 @@
 # User configuration
 # =========================
 set PART "xcvu2p-fsvj2104-3-e"   ;# <-- change to your exact part
-set TOP  "top"               ;# <-- your top module (note: no dash)
+set TOP  "qsfp_i2c_top"               ;# <-- your top module (note: no dash)
 
 set SRC_DIR "./src"
 set BUILD_DIR "./build"
@@ -31,10 +31,10 @@ read_verilog [glob $SRC_DIR/rtl/*.v]
 # Constraints
 read_xdc [glob $SRC_DIR/constraints/*.xdc]
 
-set ip_files [glob $SRC_DIR/ip/*.xci]
+set ip_files [glob $SRC_DIR/ip/*_ip.tcl]
 
 foreach ip $ip_files {
-    import_ip $ip
+    source $ip
 }
 
 generate_target all [get_ips]

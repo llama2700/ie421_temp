@@ -31,11 +31,13 @@ read_verilog -sv [glob $SRC_DIR/rtl/*.sv]
 # Constraints
 read_xdc [glob $SRC_DIR/constraints/*.xdc]
 
-set ip_files [glob $SRC_DIR/ip/*.xci]
+set ip_files [glob $SRC_DIR/ip/*_ip.tcl]
 
 foreach ip $ip_files {
-    import_ip $ip
+    # import_ip $ip
+    source $ip
 }
+
 
 generate_target all [get_ips]
 synth_ip [get_ips]
