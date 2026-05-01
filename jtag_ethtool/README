@@ -1,2 +1,9 @@
 ethtool is a small utility for examining and tuning your ethernet-based
 network interface.  See the man page for more details.
+
+
+Guyan's Work 4/30/2026:
+Initial port of QSDP I2C read logic from Tcl to C.
+Implemented register mapping and I2C read sequence in jtag_qsfp.c matching qsfp.tcl.
+Note: JTAG transport layer (TODO) needs to be implemented to run on hardware.
+
