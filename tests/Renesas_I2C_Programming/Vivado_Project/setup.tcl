@@ -40,6 +40,13 @@ add_files -norecurse -scan_for_includes ${_origin_dir_}/Scripts/example_files/RC
 add_files -norecurse -scan_for_includes ${_origin_dir_}/RTL/axi_master.v
 add_files -norecurse -scan_for_includes ${_origin_dir_}/RTL/i2c_sequencer.sv
 add_files -norecurse -scan_for_includes ${_origin_dir_}/RTL/renesas_i2c_top.v
+add_files -norecurse -scan_for_includes ${_origin_dir_}/RTL/freq_counter/syncer_reset.sv
+add_files -norecurse -scan_for_includes ${_origin_dir_}/RTL/freq_counter/syncer_level.sv
+add_files -norecurse -scan_for_includes ${_origin_dir_}/RTL/freq_counter/freq_counter.v
+add_files -norecurse -scan_for_includes ${_origin_dir_}/RTL/freq_counter/freq_counter_regs.v
+add_files -norecurse -scan_for_includes ${_origin_dir_}/RTL/freq_counter/freq_counter_top.v
+add_files -norecurse -scan_for_includes ${_origin_dir_}/RTL/system/system_gtf_clk_buffer.v
+add_files -norecurse -scan_for_includes ${_origin_dir_}/RTL/system/reg_axi_slave.v
 
 # ------------------------------------------------------
 #
@@ -76,6 +83,10 @@ source ${_origin_dir_}/IP/blk_mem_gen_0_ip.tcl
 source ${_origin_dir_}/IP/clk_wiz_0_ip.tcl
 source ${_origin_dir_}/IP/ila_0_ip.tcl
 source ${_origin_dir_}/IP/vio_0_ip.tcl
+
+# JTAG AXI IP for register access
+create_ip -name jtag_axi -vendor xilinx.com -library ip -version 1.2 -module_name jtag_axi_0
+set_property CONFIG.PROTOCOL {2} [get_ips jtag_axi_0]
 
 
 # ------------------------------------------------------

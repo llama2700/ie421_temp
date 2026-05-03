@@ -963,3 +963,162 @@ set_clock_groups -name async24 \
                  -group $PCIE_CLK2 \
                  -group $SYS_CLK
 
+
+# -----------------------------------------------------------
+#
+#  SYNCE Clock Bus Ports (for freq_counter monitoring)
+#  Maps synce_clk_lvds_p/n[7:0] to 8 jitter cleaner outputs
+#  (Skipping standalone banks 129 and 226)
+#
+# -----------------------------------------------------------
+
+# [0] = Bank 127 - MGTREFCLK0P_127_AG36
+set_property PACKAGE_PIN    AG36             [get_ports {synce_clk_lvds_p[0]}]
+set_property PACKAGE_PIN    AG37             [get_ports {synce_clk_lvds_n[0]}]
+
+# [1] = Bank 128 - MGTREFCLK0P_128_AC36
+set_property PACKAGE_PIN    AC36             [get_ports {synce_clk_lvds_p[1]}]
+set_property PACKAGE_PIN    AC37             [get_ports {synce_clk_lvds_n[1]}]
+
+# [2] = Bank 130 - MGTREFCLK0P_130_R36
+set_property PACKAGE_PIN    R36              [get_ports {synce_clk_lvds_p[2]}]
+set_property PACKAGE_PIN    R37              [get_ports {synce_clk_lvds_n[2]}]
+
+# [3] = Bank 131 - MGTREFCLK0P_131_L36
+set_property PACKAGE_PIN    L36              [get_ports {synce_clk_lvds_p[3]}]
+set_property PACKAGE_PIN    L37              [get_ports {synce_clk_lvds_n[3]}]
+
+# [4] = Bank 227 - MGTREFCLK0P_227_AJ11
+set_property PACKAGE_PIN    AJ11             [get_ports {synce_clk_lvds_p[4]}]
+set_property PACKAGE_PIN    AJ10             [get_ports {synce_clk_lvds_n[4]}]
+
+# [5] = Bank 228 - MGTREFCLK0P_228_AE11
+set_property PACKAGE_PIN    AE11             [get_ports {synce_clk_lvds_p[5]}]
+set_property PACKAGE_PIN    AE10             [get_ports {synce_clk_lvds_n[5]}]
+
+# [6] = Bank 229 - MGTREFCLK0P_229_AA11
+set_property PACKAGE_PIN    AA11             [get_ports {synce_clk_lvds_p[6]}]
+set_property PACKAGE_PIN    AA10             [get_ports {synce_clk_lvds_n[6]}]
+
+# [7] = Bank 230 - MGTREFCLK0P_230_U11
+set_property PACKAGE_PIN    U11              [get_ports {synce_clk_lvds_p[7]}]
+set_property PACKAGE_PIN    U10              [get_ports {synce_clk_lvds_n[7]}]
+
+
+# -----------------------------------------------------------
+#  Clock constraints for SYNCE clocks (~161.1328 MHz = 6.207ns)
+# -----------------------------------------------------------
+
+create_clock -period 6.207 -name CLK_SYNCE_127 [get_ports {synce_clk_lvds_p[0]}]
+create_clock -period 6.207 -name CLK_SYNCE_128 [get_ports {synce_clk_lvds_p[1]}]
+create_clock -period 6.207 -name CLK_SYNCE_130 [get_ports {synce_clk_lvds_p[2]}]
+create_clock -period 6.207 -name CLK_SYNCE_131 [get_ports {synce_clk_lvds_p[3]}]
+create_clock -period 6.207 -name CLK_SYNCE_227 [get_ports {synce_clk_lvds_p[4]}]
+create_clock -period 6.207 -name CLK_SYNCE_228 [get_ports {synce_clk_lvds_p[5]}]
+create_clock -period 6.207 -name CLK_SYNCE_229 [get_ports {synce_clk_lvds_p[6]}]
+create_clock -period 6.207 -name CLK_SYNCE_230 [get_ports {synce_clk_lvds_p[7]}]
+
+
+# -----------------------------------------------------------
+#  LOC constraints for IBUFDS_GTE4 + BUFG_GT
+#  (Vivado tends to place them in unroutable locations without this)
+# -----------------------------------------------------------
+
+# [0] Bank 127 → GTF_COMMON_X0Y3, CLOCKREGION_X0Y3
+set pblock_synce_127 [create_pblock pblock_synce_127]
+resize_pblock $pblock_synce_127 -add { CLOCKREGION_X0Y3:CLOCKREGION_X0Y3 }
+add_cells_to_pblock $pblock_synce_127 [get_cells -quiet [list system_gtf_clk_buffer/genblk1[0].BUFG_GT_INST      \
+                                                              system_gtf_clk_buffer/genblk1[0].IBUFDS_GTE4_INST] ]
+add_cells_to_pblock $pblock_synce_127 [get_cells -quiet [list freq_counter_top/freq_counter_0/syncer_reset_aresetn \
+                                                              freq_counter_top/freq_counter_0/syncer_level_en_sample] ]
+set_property LOC GTF_COMMON_X0Y3 [get_cells system_gtf_clk_buffer/genblk1[0].IBUFDS_GTE4_INST]
+
+# [1] Bank 128 → GTF_COMMON_X0Y4, CLOCKREGION_X0Y4
+set pblock_synce_128 [create_pblock pblock_synce_128]
+resize_pblock $pblock_synce_128 -add { CLOCKREGION_X0Y4:CLOCKREGION_X0Y4 }
+add_cells_to_pblock $pblock_synce_128 [get_cells -quiet [list system_gtf_clk_buffer/genblk1[1].BUFG_GT_INST      \
+                                                              system_gtf_clk_buffer/genblk1[1].IBUFDS_GTE4_INST] ]
+add_cells_to_pblock $pblock_synce_128 [get_cells -quiet [list freq_counter_top/freq_counter_1/syncer_reset_aresetn \
+                                                              freq_counter_top/freq_counter_1/syncer_level_en_sample] ]
+set_property LOC GTF_COMMON_X0Y4 [get_cells system_gtf_clk_buffer/genblk1[1].IBUFDS_GTE4_INST]
+
+# [2] Bank 130 → GTF_COMMON_X0Y6, CLOCKREGION_X0Y6
+set pblock_synce_130 [create_pblock pblock_synce_130]
+resize_pblock $pblock_synce_130 -add { CLOCKREGION_X0Y6:CLOCKREGION_X0Y6 }
+add_cells_to_pblock $pblock_synce_130 [get_cells -quiet [list system_gtf_clk_buffer/genblk1[2].BUFG_GT_INST      \
+                                                              system_gtf_clk_buffer/genblk1[2].IBUFDS_GTE4_INST] ]
+add_cells_to_pblock $pblock_synce_130 [get_cells -quiet [list freq_counter_top/freq_counter_2/syncer_reset_aresetn \
+                                                              freq_counter_top/freq_counter_2/syncer_level_en_sample] ]
+set_property LOC GTF_COMMON_X0Y6 [get_cells system_gtf_clk_buffer/genblk1[2].IBUFDS_GTE4_INST]
+
+# [3] Bank 131 → GTF_COMMON_X0Y7, CLOCKREGION_X0Y7
+set pblock_synce_131 [create_pblock pblock_synce_131]
+resize_pblock $pblock_synce_131 -add { CLOCKREGION_X0Y7:CLOCKREGION_X0Y7 }
+add_cells_to_pblock $pblock_synce_131 [get_cells -quiet [list system_gtf_clk_buffer/genblk1[3].BUFG_GT_INST      \
+                                                              system_gtf_clk_buffer/genblk1[3].IBUFDS_GTE4_INST] ]
+add_cells_to_pblock $pblock_synce_131 [get_cells -quiet [list freq_counter_top/freq_counter_3/syncer_reset_aresetn \
+                                                              freq_counter_top/freq_counter_3/syncer_level_en_sample] ]
+set_property LOC GTF_COMMON_X0Y7 [get_cells system_gtf_clk_buffer/genblk1[3].IBUFDS_GTE4_INST]
+
+# [4] Bank 227 → GTF_COMMON_X1Y3, CLOCKREGION_X5Y3
+set pblock_synce_227 [create_pblock pblock_synce_227]
+resize_pblock $pblock_synce_227 -add { CLOCKREGION_X5Y3:CLOCKREGION_X5Y3 }
+add_cells_to_pblock $pblock_synce_227 [get_cells -quiet [list system_gtf_clk_buffer/genblk1[4].BUFG_GT_INST      \
+                                                              system_gtf_clk_buffer/genblk1[4].IBUFDS_GTE4_INST] ]
+add_cells_to_pblock $pblock_synce_227 [get_cells -quiet [list freq_counter_top/freq_counter_4/syncer_reset_aresetn \
+                                                              freq_counter_top/freq_counter_4/syncer_level_en_sample] ]
+set_property LOC GTF_COMMON_X1Y3 [get_cells system_gtf_clk_buffer/genblk1[4].IBUFDS_GTE4_INST]
+
+# [5] Bank 228 → GTF_COMMON_X1Y4, CLOCKREGION_X5Y4
+set pblock_synce_228 [create_pblock pblock_synce_228]
+resize_pblock $pblock_synce_228 -add { CLOCKREGION_X5Y4:CLOCKREGION_X5Y4 }
+add_cells_to_pblock $pblock_synce_228 [get_cells -quiet [list system_gtf_clk_buffer/genblk1[5].BUFG_GT_INST      \
+                                                              system_gtf_clk_buffer/genblk1[5].IBUFDS_GTE4_INST] ]
+add_cells_to_pblock $pblock_synce_228 [get_cells -quiet [list freq_counter_top/freq_counter_5/syncer_reset_aresetn \
+                                                              freq_counter_top/freq_counter_5/syncer_level_en_sample] ]
+set_property LOC GTF_COMMON_X1Y4 [get_cells system_gtf_clk_buffer/genblk1[5].IBUFDS_GTE4_INST]
+
+# [6] Bank 229 → GTF_COMMON_X1Y5, CLOCKREGION_X5Y5
+set pblock_synce_229 [create_pblock pblock_synce_229]
+resize_pblock $pblock_synce_229 -add { CLOCKREGION_X5Y5:CLOCKREGION_X5Y5 }
+add_cells_to_pblock $pblock_synce_229 [get_cells -quiet [list system_gtf_clk_buffer/genblk1[6].BUFG_GT_INST      \
+                                                              system_gtf_clk_buffer/genblk1[6].IBUFDS_GTE4_INST] ]
+add_cells_to_pblock $pblock_synce_229 [get_cells -quiet [list freq_counter_top/freq_counter_6/syncer_reset_aresetn \
+                                                              freq_counter_top/freq_counter_6/syncer_level_en_sample] ]
+set_property LOC GTF_COMMON_X1Y5 [get_cells system_gtf_clk_buffer/genblk1[6].IBUFDS_GTE4_INST]
+
+# [7] Bank 230 → GTF_COMMON_X1Y6, CLOCKREGION_X5Y6
+set pblock_synce_230 [create_pblock pblock_synce_230]
+resize_pblock $pblock_synce_230 -add { CLOCKREGION_X5Y6:CLOCKREGION_X5Y6 }
+add_cells_to_pblock $pblock_synce_230 [get_cells -quiet [list system_gtf_clk_buffer/genblk1[7].BUFG_GT_INST      \
+                                                              system_gtf_clk_buffer/genblk1[7].IBUFDS_GTE4_INST] ]
+add_cells_to_pblock $pblock_synce_230 [get_cells -quiet [list freq_counter_top/freq_counter_7/syncer_reset_aresetn \
+                                                              freq_counter_top/freq_counter_7/syncer_level_en_sample] ]
+set_property LOC GTF_COMMON_X1Y6 [get_cells system_gtf_clk_buffer/genblk1[7].IBUFDS_GTE4_INST]
+
+
+# -----------------------------------------------------------
+#  False Path Timing Constraints for Freq. Monitors
+#  (SYNCE clocks are asynchronous to system clock)
+# -----------------------------------------------------------
+
+set_false_path  -from [get_clocks -of_objects [get_pins clk_wiz_0/inst/mmcme4_adv_inst/CLKOUT0]] \
+                -to   [list [get_clocks CLK_SYNCE_127] \
+                            [get_clocks CLK_SYNCE_128] \
+                            [get_clocks CLK_SYNCE_130] \
+                            [get_clocks CLK_SYNCE_131] \
+                            [get_clocks CLK_SYNCE_227] \
+                            [get_clocks CLK_SYNCE_228] \
+                            [get_clocks CLK_SYNCE_229] \
+                            [get_clocks CLK_SYNCE_230] ]
+
+set_false_path  -from [list [get_clocks CLK_SYNCE_127] \
+                            [get_clocks CLK_SYNCE_128] \
+                            [get_clocks CLK_SYNCE_130] \
+                            [get_clocks CLK_SYNCE_131] \
+                            [get_clocks CLK_SYNCE_227] \
+                            [get_clocks CLK_SYNCE_228] \
+                            [get_clocks CLK_SYNCE_229] \
+                            [get_clocks CLK_SYNCE_230] ] \
+                -to   [get_clocks -of_objects [get_pins clk_wiz_0/inst/mmcme4_adv_inst/CLKOUT0]]
+
