@@ -25,7 +25,8 @@ module i2c_sequencer #(
 
     output reg  [7:0]                 xfer_count       ,
     output reg  [31:0]                xfer_offset      ,
-    output reg                        xfer_enable
+    output reg                        xfer_enable      ,
+    output wire                       seq_busy
 );
 
 
@@ -355,6 +356,9 @@ always@(posedge aclk)
 
 assign seq_axi_wr_req = wr_req & st_change[3];
 assign seq_axi_rd_req = rd_req & st_change[3];
+
+// Busy when sequencer is actively running (not idle or done)
+assign seq_busy = (cstate != ST_RST) && (cstate != ST_DONE);
 
 
 // ----------------------------------------------------------------

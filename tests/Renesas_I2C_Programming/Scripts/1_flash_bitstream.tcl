@@ -7,15 +7,18 @@
 
 # Connect to hardware
 open_hw_manager
-connect_hw_server -allow_non_jtag
+connect_hw_server
+current_hw_target [get_hw_targets *JWA]
 open_hw_target
+refresh_hw_target
 
 # Find the device
-set device [lindex [get_hw_devices] 0]
+set device [get_hw_devices xcvu2p_0]
 current_hw_device $device
+refresh_hw_device $device
 
 # Set the bitstream path (adjust if your project path differs)
-set bit_file [glob -nocomplain X:/Renesas_I2C_Programming/Vivado_Project/project_1/project_1.runs/impl_1/*.bit]
+set bit_file [glob $::env(HOME)/group_05_project/tests/Renesas_I2C_Programming/Vivado_Project/project_1/project_1.runs/impl_1/*.bit]
 
 if {$bit_file eq ""} {
     puts "ERROR: No .bit file found in impl_1 directory."
@@ -23,7 +26,10 @@ if {$bit_file eq ""} {
     return
 }
 
+set ltx_file [glob $::env(HOME)/group_05_project/tests/Renesas_I2C_Programming/Vivado_Project/project_1/project_1.runs/impl_1/*.ltx]
+
 set_property PROGRAM.FILE $bit_file $device
+set_property PROBES.FILE $ltx_file $device
 program_hw_devices $device
 refresh_hw_device $device
 

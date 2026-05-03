@@ -17,7 +17,7 @@
 #   [3] Bank 131   [7] Bank 230
 #
 
-set axi [get_hw_axis hw_axi_1]
+set axi [lindex [get_hw_axis] 0]
 
 # Step 1: Release reset
 create_hw_axi_txn wr_rstn $axi -type write -address 00000014 -data 00000001 -force

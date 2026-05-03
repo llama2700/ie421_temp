@@ -39,6 +39,8 @@ create_project -force ${_proj_name_} ${_proj_path_} -part ${_part_name_}
 add_files -norecurse -scan_for_includes ${_origin_dir_}/Scripts/example_files/RC38612_avalon_2022april05_config15_v2_lvds_registers.coe
 add_files -norecurse -scan_for_includes ${_origin_dir_}/RTL/axi_master.v
 add_files -norecurse -scan_for_includes ${_origin_dir_}/RTL/i2c_sequencer.sv
+add_files -norecurse -scan_for_includes ${_origin_dir_}/RTL/i2c_axi_sequencer.v
+add_files -norecurse -scan_for_includes ${_origin_dir_}/RTL/reg_i2c_user_logic.v
 add_files -norecurse -scan_for_includes ${_origin_dir_}/RTL/renesas_i2c_top.v
 add_files -norecurse -scan_for_includes ${_origin_dir_}/RTL/freq_counter/syncer_reset.sv
 add_files -norecurse -scan_for_includes ${_origin_dir_}/RTL/freq_counter/syncer_level.sv

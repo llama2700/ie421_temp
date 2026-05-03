@@ -114,10 +114,17 @@ wire                           m_axi_wready   ;
 wire  [7:0]                    xfer_count     ;
 wire  [31:0]                   xfer_offset    ;
 wire                           xfer_enable    ;
+wire                           bulk_seq_busy  ;
+
+// Bulk sequencer outputs (before mux)
+wire                           bulk_wr_req    ;
+wire                           bulk_rd_req    ;
+wire [AXI_ADDR_WIDTH_0-1:0]   bulk_addr      ;
+wire [AXI_DATA_WIDTH_0-1:0]   bulk_wdata     ;
 
 // -----------------------------------------------------------
 //
-//    I2C Command Sequencer....
+//    I2C Command Sequencer (bulk programming from BRAM)....
 //
 // -------------------------------------------------
 
@@ -130,24 +137,97 @@ i2c_sequencer  #(
 
     .start_pulse      ( start_pulse     ),
 
-    .seq_axi_wr_req   ( seq_axi_wr_req  ),
-    .seq_axi_rd_req   ( seq_axi_rd_req  ),
-    .seq_axi_addr     ( seq_axi_addr    ),
-    .seq_axi_wdata    ( seq_axi_wdata   ),
+    .seq_axi_wr_req   ( bulk_wr_req     ),
+    .seq_axi_rd_req   ( bulk_rd_req     ),
+    .seq_axi_addr     ( bulk_addr       ),
+    .seq_axi_wdata    ( bulk_wdata      ),
     .seq_axi_ack      ( seq_axi_ack     ),
     .seq_axi_rdata    ( seq_axi_rdata   ),
 
     .xfer_count       ( xfer_count      ),
     .xfer_offset      ( xfer_offset     ),
-    .xfer_enable      ( xfer_enable     )
+    .xfer_enable      ( xfer_enable     ),
+    .seq_busy         ( bulk_seq_busy   )
 );
-
-assign seq_axi_wstrb = {AXI_DATA_WIDTH_0/8 {1'b1} };
 
 
 // -----------------------------------------------------------
 //
-//    AXI I/F Driver....
+//    User I2C Path (single-transaction read/write via JTAG)
+//
+// -----------------------------------------------------------
+
+wire        user_ctrl_pulse ;
+wire [0:0]  user_ctrl_rw    ;
+wire [7:0]  user_ctrl_id    ;
+wire [7:0]  user_addr_addr  ;
+wire [7:0]  user_wdata_data ;
+wire [7:0]  user_rdata_data ;
+wire        user_ctrl_cmplt ;
+
+wire                           user_wr_req    ;
+wire                           user_rd_req    ;
+wire [AXI_ADDR_WIDTH_0-1:0]   user_addr      ;
+wire [AXI_DATA_WIDTH_0-1:0]   user_wdata     ;
+
+reg_i2c_user_logic reg_i2c_user_logic (
+    .aclk              ( s_axi_aclk        ),
+    .aresetn           ( s_axi_aresetn     ),
+    .wen               ( fc_sys_if_wen     ),
+    .addr              ( fc_sys_if_addr    ),
+    .wdata             ( fc_sys_if_wdata   ),
+    .rdata             ( i2c_user_rdata    ),
+    .IO_CONTROL_PULSE  ( user_ctrl_pulse   ),
+    .IO_CONTROL_RW     ( user_ctrl_rw      ),
+    .IO_CONTROL_ID     ( user_ctrl_id      ),
+    .IO_ADDR_ADDR      ( user_addr_addr    ),
+    .IO_WDATA_WDATA    ( user_wdata_data   ),
+    .IO_RDATA_RDATA    ( user_rdata_data   ),
+    .IO_CONTROL_CMPLT  ( user_ctrl_cmplt   )
+);
+
+i2c_axi_sequencer #(
+    .AXI_ADDR_WIDTH ( AXI_ADDR_WIDTH_0 ),
+    .AXI_DATA_WIDTH ( AXI_DATA_WIDTH_0 )
+) i2c_axi_sequencer (
+    .aclk             ( s_axi_aclk        ),
+    .aresetn          ( s_axi_aresetn     ),
+
+    .IO_CONTROL_PULSE ( user_ctrl_pulse   ),
+    .IO_CONTROL_RW    ( user_ctrl_rw      ),
+    .IO_CONTROL_ID    ( user_ctrl_id      ),
+    .IO_ADDR_ADDR     ( user_addr_addr    ),
+    .IO_WDATA_WDATA   ( user_wdata_data   ),
+    .IO_RDATA_RDATA   ( user_rdata_data   ),
+    .IO_CONTROL_CMPLT ( user_ctrl_cmplt   ),
+
+    .seq_axi_wr_req   ( user_wr_req       ),
+    .seq_axi_rd_req   ( user_rd_req       ),
+    .seq_axi_addr     ( user_addr         ),
+    .seq_axi_wdata    ( user_wdata        ),
+    .seq_axi_ack      ( seq_axi_ack       ),
+    .seq_axi_rdata    ( seq_axi_rdata     )
+);
+
+
+// -----------------------------------------------------------
+//
+//    seq_axi Mux: bulk sequencer vs user path
+//    When bulk is busy → bulk has control
+//    When bulk is idle (ST_RST or ST_DONE) → user has control
+//
+// -----------------------------------------------------------
+
+assign seq_axi_wr_req = bulk_seq_busy ? bulk_wr_req : user_wr_req ;
+assign seq_axi_rd_req = bulk_seq_busy ? bulk_rd_req : user_rd_req ;
+assign seq_axi_addr   = bulk_seq_busy ? bulk_addr   : user_addr   ;
+assign seq_axi_wdata  = bulk_seq_busy ? bulk_wdata  : user_wdata  ;
+assign seq_axi_wstrb  = {AXI_DATA_WIDTH_0/8 {1'b1} };
+
+
+// -----------------------------------------------------------
+//
+//    AXI I/F Driver (shared)....
 //
 // -----------------------------------------------------------
 
@@ -158,7 +238,7 @@ axi_master  #(
     .m_axi_aclk     ( s_axi_aclk      ),
     .m_axi_aresetn  ( s_axi_aresetn   ),
 
-    // Simple TG Interface...
+    // Simple TG Interface (muxed)...
     .wr_req         ( seq_axi_wr_req      ),
     .rd_req         ( seq_axi_rd_req      ),
     .addr           ( seq_axi_addr        ),
@@ -349,6 +429,7 @@ wire        fc_sys_if_wen   ;
 wire [31:0] fc_sys_if_addr  ;
 wire [31:0] fc_sys_if_wdata ;
 wire [31:0] fc_sys_if_rdata ;
+wire [31:0] i2c_user_rdata  ;
 
 reg_axi_slave reg_axi_slave (
     .s_axi_aclk     ( s_axi_aclk           ),
@@ -377,7 +458,7 @@ reg_axi_slave reg_axi_slave (
     .addr           ( fc_sys_if_addr       ),
     .wdata          ( fc_sys_if_wdata      ),
     .wstrb          (                      ),
-    .rdata          ( fc_sys_if_rdata      )
+    .rdata          ( fc_sys_if_rdata | i2c_user_rdata )
 );
 
 
