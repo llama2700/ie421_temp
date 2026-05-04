@@ -1,10 +1,11 @@
 /*
  * Ultra-low-latency fused TX MAC+PCS.
  *
- * 2-stage pipeline:
- *   Cycle 0: AXI-S input registered, state machine determines output type
- *   Cycle 1: Encode to 64b/66b block type + scramble, register output
- * 
+ * 1-register pipeline
+ *   - AXI-S read combinationally
+ *   - single pipeline register: output_data_reg + output_type_reg
+ *   - encode and scramble are combinational from output_data_reg to serdes ports
+ * "Second" stage is the TXDATA reg inside GTF
  */
 
 `resetall
@@ -28,7 +29,7 @@ module ll_eth_tx #(
     input  wire                   s_axis_tlast,
     input  wire                   s_axis_tuser,
 
-    // SerDes output (to GTF raw)
+    // SerDes output (to GTF raw) — combinational, no output register
     output wire [DATA_WIDTH-1:0]  serdes_tx_data,
     output wire [HDR_WIDTH-1:0]   serdes_tx_hdr,
 
@@ -98,7 +99,6 @@ localparam [3:0]
     OUTPUT_TYPE_TERM_6  = 4'd14,
     OUTPUT_TYPE_TERM_7  = 4'd15;
 
-// IDLE -> PREAMBLE -> PAYLOAD -> PAD -> FCS_1 -> FCS_2 -> IFG -> IDLE
 localparam [2:0]
     STATE_IDLE     = 3'd0,
     STATE_PAYLOAD  = 3'd1,
@@ -122,16 +122,19 @@ reg [31:0] swap_data = 32'd0;
 reg delay_type_valid = 1'b0;
 reg [3:0] delay_type = OUTPUT_TYPE_IDLE;
 
+// Masked AXI-S input, comb
 reg [DATA_WIDTH-1:0] s_axis_tdata_masked;
 
-reg [DATA_WIDTH-1:0] s_tdata_reg = 0, s_tdata_next;
-reg [EMPTY_WIDTH-1:0] s_empty_reg = 0, s_empty_next;
+// Last data beat + empty count — captured when tlast is seen,
+// used by FCS_1/FCS_2 states after AXI-S input is gone
+reg [DATA_WIDTH-1:0] last_data_reg  = {DATA_WIDTH{1'b0}};
+reg [EMPTY_WIDTH-1:0] last_empty_reg = {EMPTY_WIDTH{1'b0}};
 
+// FCS calculation signals
 reg [DATA_WIDTH-1:0] fcs_output_data_0;
 reg [DATA_WIDTH-1:0] fcs_output_data_1;
 reg [3:0] fcs_output_type_0;
 reg [3:0] fcs_output_type_1;
-
 reg [7:0] ifg_offset;
 
 reg [MIN_LEN_WIDTH-1:0] frame_min_count_reg = 0, frame_min_count_next;
@@ -144,17 +147,13 @@ reg s_axis_tready_reg = 1'b0, s_axis_tready_next;
 reg [31:0] crc_state = 32'hFFFFFFFF;
 wire [31:0] crc_next [7:0];
 
-// Pre-encode output
+// Single pipeline reg: pre-encode output
 reg [DATA_WIDTH-1:0] output_data_reg = {DATA_WIDTH{1'b0}}, output_data_next;
 reg [3:0] output_type_reg = OUTPUT_TYPE_IDLE, output_type_next;
 
-// Post-encode (pre-scramble)
+// Post-encode
 reg [DATA_WIDTH-1:0] encoded_data;
 reg [HDR_WIDTH-1:0]  encoded_hdr;
-
-// Scrambled output registers
-reg [DATA_WIDTH-1:0] serdes_tx_data_reg = {{8{CTRL_IDLE}}, BLOCK_TYPE_CTRL};
-reg [HDR_WIDTH-1:0]  serdes_tx_hdr_reg  = SYNC_CTRL;
 
 // Scrambler state
 reg [57:0] scrambler_state = {58{1'b1}};
@@ -167,13 +166,18 @@ reg tx_start_packet_reg = 1'b0, tx_start_packet_next;
 reg tx_error_underflow_reg = 1'b0, tx_error_underflow_next;
 
 assign s_axis_tready     = s_axis_tready_reg;
-assign serdes_tx_data    = serdes_tx_data_reg;
-assign serdes_tx_hdr     = serdes_tx_hdr_reg;
+
+// serdes outputs driven combinationally from encode+scramble
+// latched by GTFs internal reg which is tje final pipe stage
+assign serdes_tx_data    = scrambled_data;
+assign serdes_tx_hdr     = encoded_hdr;
+
 assign tx_start_packet   = tx_start_packet_reg;
 assign tx_error_underflow = tx_error_underflow_reg;
 
 // ---------------------------------------------------------------
 // CRC-32 instances (8 parallel, 1-8 bytes)
+// Changed to read from last_data_reg
 // ---------------------------------------------------------------
 generate
     genvar n;
@@ -187,7 +191,7 @@ generate
             .DATA_WIDTH(8*(n+1)),
             .STYLE("AUTO")
         ) eth_crc (
-            .data_in(s_tdata_reg[0 +: 8*(n+1)]),
+            .data_in(last_data_reg[0 +: 8*(n+1)]),
             .state_in(crc_state),
             .data_out(),
             .state_out(crc_next[n])
@@ -196,7 +200,7 @@ generate
 endgenerate
 
 // ---------------------------------------------------------------
-// Scrambler (combinational, operates on encoded output)
+// Scrambler
 // ---------------------------------------------------------------
 generate
     if (!SCRAMBLER_DISABLE) begin : gen_scrambler
@@ -252,58 +256,58 @@ end
 // FCS cycle calculation
 // ---------------------------------------------------------------
 always @* begin
-    casez (s_empty_reg)
+    casez (last_empty_reg)
         3'd7: begin
-            fcs_output_data_0 = {24'd0, ~crc_next[0][31:0], s_tdata_reg[7:0]};
+            fcs_output_data_0 = {24'd0, ~crc_next[0][31:0], last_data_reg[7:0]};
             fcs_output_data_1 = 64'd0;
             fcs_output_type_0 = OUTPUT_TYPE_TERM_5;
             fcs_output_type_1 = OUTPUT_TYPE_IDLE;
             ifg_offset = 8'd3;
         end
         3'd6: begin
-            fcs_output_data_0 = {16'd0, ~crc_next[1][31:0], s_tdata_reg[15:0]};
+            fcs_output_data_0 = {16'd0, ~crc_next[1][31:0], last_data_reg[15:0]};
             fcs_output_data_1 = 64'd0;
             fcs_output_type_0 = OUTPUT_TYPE_TERM_6;
             fcs_output_type_1 = OUTPUT_TYPE_IDLE;
             ifg_offset = 8'd2;
         end
         3'd5: begin
-            fcs_output_data_0 = {8'd0, ~crc_next[2][31:0], s_tdata_reg[23:0]};
+            fcs_output_data_0 = {8'd0, ~crc_next[2][31:0], last_data_reg[23:0]};
             fcs_output_data_1 = 64'd0;
             fcs_output_type_0 = OUTPUT_TYPE_TERM_7;
             fcs_output_type_1 = OUTPUT_TYPE_IDLE;
             ifg_offset = 8'd1;
         end
         3'd4: begin
-            fcs_output_data_0 = {~crc_next[3][31:0], s_tdata_reg[31:0]};
+            fcs_output_data_0 = {~crc_next[3][31:0], last_data_reg[31:0]};
             fcs_output_data_1 = 64'd0;
             fcs_output_type_0 = OUTPUT_TYPE_DATA;
             fcs_output_type_1 = OUTPUT_TYPE_TERM_0;
             ifg_offset = 8'd8;
         end
         3'd3: begin
-            fcs_output_data_0 = {~crc_next[4][23:0], s_tdata_reg[39:0]};
+            fcs_output_data_0 = {~crc_next[4][23:0], last_data_reg[39:0]};
             fcs_output_data_1 = {56'd0, ~crc_next[4][31:24]};
             fcs_output_type_0 = OUTPUT_TYPE_DATA;
             fcs_output_type_1 = OUTPUT_TYPE_TERM_1;
             ifg_offset = 8'd7;
         end
         3'd2: begin
-            fcs_output_data_0 = {~crc_next[5][15:0], s_tdata_reg[47:0]};
+            fcs_output_data_0 = {~crc_next[5][15:0], last_data_reg[47:0]};
             fcs_output_data_1 = {48'd0, ~crc_next[5][31:16]};
             fcs_output_type_0 = OUTPUT_TYPE_DATA;
             fcs_output_type_1 = OUTPUT_TYPE_TERM_2;
             ifg_offset = 8'd6;
         end
         3'd1: begin
-            fcs_output_data_0 = {~crc_next[6][7:0], s_tdata_reg[55:0]};
+            fcs_output_data_0 = {~crc_next[6][7:0], last_data_reg[55:0]};
             fcs_output_data_1 = {40'd0, ~crc_next[6][31:8]};
             fcs_output_type_0 = OUTPUT_TYPE_DATA;
             fcs_output_type_1 = OUTPUT_TYPE_TERM_3;
             ifg_offset = 8'd5;
         end
         3'd0: begin
-            fcs_output_data_0 = s_tdata_reg;
+            fcs_output_data_0 = last_data_reg;
             fcs_output_data_1 = {32'd0, ~crc_next[7][31:0]};
             fcs_output_type_0 = OUTPUT_TYPE_DATA;
             fcs_output_type_1 = OUTPUT_TYPE_TERM_4;
@@ -312,9 +316,13 @@ always @* begin
     endcase
 end
 
+// Data flow:
+// s_axis -> FSM (comb) -> output_data_reg [latch] -> encode (comb) -> scramble (comb) -> serdes_tx_data
+
 // ---------------------------------------------------------------
-// State machine (combinational)
+// State machine
 // ---------------------------------------------------------------
+
 always @* begin
     state_next = STATE_IDLE;
 
@@ -329,10 +337,7 @@ always @* begin
 
     s_axis_tready_next = 1'b0;
 
-    s_tdata_next = s_tdata_reg;
-    s_empty_next = s_empty_reg;
-
-    output_data_next = s_tdata_reg;
+    output_data_next = last_data_reg;
     output_type_next = OUTPUT_TYPE_IDLE;
 
     tx_start_packet_next   = 1'b0;
@@ -344,18 +349,10 @@ always @* begin
             reset_crc = 1'b1;
             s_axis_tready_next = 1'b1;
 
-            output_data_next = s_tdata_reg;
             output_type_next = OUTPUT_TYPE_IDLE;
 
-            s_tdata_next = s_axis_tdata_masked;
-            s_empty_next = keep2empty(s_axis_tkeep);
-
             if (s_axis_tvalid) begin
-                if (swap_lanes_reg) begin
-                    tx_start_packet_next = 1'b1;
-                end else begin
-                    tx_start_packet_next = 1'b1;
-                end
+                tx_start_packet_next = 1'b1;
                 output_data_next = {ETH_SFD, {7{ETH_PRE}}};
                 output_type_next = OUTPUT_TYPE_START_0;
                 s_axis_tready_next = 1'b1;
@@ -377,11 +374,8 @@ always @* begin
                 frame_min_count_next = 0;
             end
 
-            output_data_next = s_tdata_reg;
+            output_data_next = last_data_reg;
             output_type_next = OUTPUT_TYPE_DATA;
-
-            s_tdata_next = s_axis_tdata_masked;
-            s_empty_next = keep2empty(s_axis_tkeep);
 
             if (s_axis_tvalid) begin
                 if (s_axis_tlast) begin
@@ -393,12 +387,8 @@ always @* begin
                     end else begin
                         if (frame_min_count_reg) begin
                             if (frame_min_count_reg > KEEP_WIDTH) begin
-                                s_empty_next = 0;
-                                state_next   = STATE_PAD;
+                                state_next = STATE_PAD;
                             end else begin
-                                if (keep2empty(s_axis_tkeep) > KEEP_WIDTH - frame_min_count_reg) begin
-                                    s_empty_next = KEEP_WIDTH - frame_min_count_reg;
-                                end
                                 state_next = STATE_FCS_1;
                             end
                         end else begin
@@ -409,7 +399,6 @@ always @* begin
                     state_next = STATE_PAYLOAD;
                 end
             end else begin
-                // tvalid deassert: fail frame
                 output_type_next        = OUTPUT_TYPE_ERROR;
                 ifg_count_next          = 8'd8;
                 tx_error_underflow_next = 1'b1;
@@ -419,19 +408,16 @@ always @* begin
         STATE_PAD: begin
             s_axis_tready_next = 1'b0;
 
-            output_data_next = s_tdata_reg;
+            output_data_next = last_data_reg;
             output_type_next = OUTPUT_TYPE_DATA;
 
-            s_tdata_next = 64'd0;
-            s_empty_next = 0;
-            update_crc   = 1'b1;
+            update_crc = 1'b1;
 
             if (frame_min_count_reg > KEEP_WIDTH) begin
                 frame_min_count_next = frame_min_count_reg - KEEP_WIDTH;
                 state_next           = STATE_PAD;
             end else begin
                 frame_min_count_next = 0;
-                s_empty_next         = KEEP_WIDTH - frame_min_count_reg;
                 state_next           = STATE_FCS_1;
             end
         end
@@ -444,7 +430,7 @@ always @* begin
             ifg_count_next = (cfg_ifg > 8'd12 ? cfg_ifg : 8'd12) - ifg_offset
                              + (swap_lanes_reg ? 8'd4 : 8'd0) + deficit_idle_count_reg;
 
-            if (s_empty_reg <= 4) begin
+            if (last_empty_reg <= 4) begin
                 state_next = STATE_FCS_2;
             end else begin
                 state_next = STATE_IFG;
@@ -610,13 +596,21 @@ always @(posedge clk) begin
     ifg_count_reg           <= ifg_count_next;
     deficit_idle_count_reg  <= deficit_idle_count_next;
 
-    s_tdata_reg       <= s_tdata_next;
-    s_empty_reg       <= s_empty_next;
     s_axis_tready_reg <= s_axis_tready_next;
 
     tx_start_packet_reg    <= tx_start_packet_next;
     tx_error_underflow_reg <= tx_error_underflow_next;
 
+    if (s_axis_tready_reg && s_axis_tvalid) begin
+        last_data_reg  <= s_axis_tdata_masked;
+        last_empty_reg <= keep2empty(s_axis_tkeep);
+    end else if (state_reg == STATE_PAD) begin
+        // During padding, feed zeros
+        last_data_reg  <= 64'd0;
+        last_empty_reg <= 3'd0;
+    end
+
+    // Lane swap logic
     delay_type_valid <= 1'b0;
     delay_type       <= output_type_next ^ 4'd4;
 
@@ -643,11 +637,7 @@ always @(posedge clk) begin
         output_type_reg <= output_type_next;
     end
 
-    // Fused encode + scramble: register final output
-    serdes_tx_data_reg <= scrambled_data;
-    serdes_tx_hdr_reg  <= encoded_hdr;
-
-    // Update scrambler state
+    // Scrambler state update
     if (!SCRAMBLER_DISABLE) begin
         scrambler_state <= scrambler_state_out;
     end
@@ -667,9 +657,6 @@ always @(posedge clk) begin
         ifg_count_reg          <= 8'd0;
         deficit_idle_count_reg <= 2'd0;
         s_axis_tready_reg      <= 1'b0;
-
-        serdes_tx_data_reg <= {{8{CTRL_IDLE}}, BLOCK_TYPE_CTRL};
-        serdes_tx_hdr_reg  <= SYNC_CTRL;
 
         output_data_reg <= {DATA_WIDTH{1'b0}};
         output_type_reg <= OUTPUT_TYPE_IDLE;
