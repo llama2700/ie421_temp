@@ -6,23 +6,28 @@ SPDX-License-Identifier: X11
 //------------------------------------------------------------------------------
 //
 //  Description: This module generates the AXI register accesses required by the
-//               Xilinx I2C IP to execute the individual high level register 
+//               Xilinx I2C IP to execute the individual high level register
 //               from the i2c_sequencer.
+//
+//  Modified to support multi-byte writes (up to 8 bytes) via IO_WCOUNT and
+//  IO_WDATA_BUF.
 //
 //------------------------------------------------------------------------------
 
 module i2c_axi_sequencer #(
-    parameter   AXI_ADDR_WIDTH = 32, 
+    parameter   AXI_ADDR_WIDTH = 32,
     parameter   AXI_DATA_WIDTH = 32
 ) (
     input  wire                       aclk         ,
     input  wire                       aresetn      ,
-                            
+
     input  wire                       IO_CONTROL_PULSE,
     input  wire [0:0]                 IO_CONTROL_RW  ,
     input  wire [7:0]                 IO_CONTROL_ID  ,
     input  wire [7:0]                 IO_ADDR_ADDR   ,
     input  wire [7:0]                 IO_WDATA_WDATA ,
+    input  wire [3:0]                 IO_WCOUNT      ,
+    input  wire [63:0]               IO_WDATA_BUF   ,
     output reg  [7:0]                 IO_RDATA_RDATA ,
     output reg                        IO_CONTROL_CMPLT,
 
@@ -32,7 +37,7 @@ module i2c_axi_sequencer #(
     output reg  [AXI_ADDR_WIDTH-1:0]  seq_axi_addr     ,
     output reg  [AXI_DATA_WIDTH-1:0]  seq_axi_wdata    ,
     input  wire                       seq_axi_ack      ,
-    input  wire [AXI_DATA_WIDTH-1:0]  seq_axi_rdata 
+    input  wire [AXI_DATA_WIDTH-1:0]  seq_axi_rdata
 );
 
 // ==============================================================
@@ -60,92 +65,144 @@ localparam ST_WR_CR_6      = 'h21;
 localparam ST_COMPLETE     = 'h23;
 localparam ST_CLR_ISR_4a   = 'h24;
 localparam ST_CLR_ISR_6a   = 'h25;
-                  
-reg [7:0] cstate; 
+localparam ST_WR_TX_FIFO_CHK = 'h26;
+localparam ST_WR_TX_FIFO_W   = 'h27;
+
+reg [7:0] cstate;
 reg [7:0] nstate;
+
+// Byte counter for multi-byte writes
+reg [3:0] byte_cnt;
+wire      last_byte = (byte_cnt == 0);
 
 always@(posedge aclk)
     if (!aresetn) cstate <= ST_IDLE;
     else          cstate <= nstate;
-    
+
 always@(*)
 begin
     nstate = cstate;
     case (cstate)
         ST_IDLE          : if (IO_CONTROL_PULSE) nstate = ST_CLR_ISR_0;
-                          
+
         // -----------------------------------
         //  Setup...
 
             // Clear ISR...
             ST_CLR_ISR_0     : if (seq_axi_ack) nstate = ST_CLR_ISR_2;
             ST_CLR_ISR_2     : if (seq_axi_ack) nstate = ST_WR_RX_PIRQ_0;
-                    
+
             // Set RX FIFO Depth
             ST_WR_RX_PIRQ_0  : if (seq_axi_ack) nstate = ST_WR_TX_0;
-    
+
             // Program TXFIFO Dev ID (bit 8 is start bit)
             ST_WR_TX_0       : if (seq_axi_ack) nstate = ST_WR_TX_2;
-    
+
             // Program TXFIFO Reg Addr
             ST_WR_TX_2       : if      (seq_axi_ack && IO_CONTROL_RW) nstate = ST_WR_TX_4;
-                               else if (seq_axi_ack)                  nstate = ST_WR_TX_8;
+                               else if (seq_axi_ack)                  nstate = ST_WR_CR_2;
 
         // -----------------------------------
         //  Read Operation...
 
             // Program TXFIFO Dev ID (bit 8 is repeated start)
             ST_WR_TX_4       : if (seq_axi_ack) nstate = ST_WR_TX_6;
-    
+
             // Program TXFIFO RX Bytes (bit 9 is stop bit)
             ST_WR_TX_6       : if (seq_axi_ack) nstate = ST_WR_CR_0;
-    
+
             // Set MSMS, Set Mode
             ST_WR_CR_0       : if (seq_axi_ack) nstate = ST_CLR_ISR_4;
-    
+
             // Wait for RX FIFO FULL
             //  -- wait for busy
             ST_CLR_ISR_4     : nstate = ST_CLR_ISR_4a;
             ST_CLR_ISR_4a    : if      (seq_axi_ack && ((seq_axi_rdata & 'h4) == 'h4) ) nstate = ST_CLR_ISR_6;
                                else if (seq_axi_ack                                   ) nstate = ST_CLR_ISR_4;
-                               
+
             //  -- wait rx not empty
             ST_CLR_ISR_6     : nstate = ST_CLR_ISR_6a;
             ST_CLR_ISR_6a    : if      (seq_axi_ack && ((seq_axi_rdata & 'h4C) == 'h0C) ) nstate = ST_RD_RX_0;
                                else if (seq_axi_ack                                     ) nstate = ST_CLR_ISR_6;
-    
-            // Read RX FIFO 
-            ST_RD_RX_0       : if (seq_axi_ack) nstate = ST_WR_CR_6; 
-            //ST_RD_RX_2       : nstate = ST_RD_RX_3;
-            //ST_RD_RX_3       : if (seq_axi_ack) nstate = ST_WR_CR_6;
+
+            // Read RX FIFO
+            ST_RD_RX_0       : if (seq_axi_ack) nstate = ST_WR_CR_6;
 
         // -----------------------------------
-        //  Write Operation...
+        //  Write Operation (multi-byte)...
 
-            // Program TXFIFO RX Bytes (bit 9 is stop bit)
-            ST_WR_TX_8       : if (seq_axi_ack) nstate = ST_WR_CR_2;
-    
-            // Set MSMS, Set Mode
-            ST_WR_CR_2       : if (seq_axi_ack) nstate = ST_CLR_ISR_8;
-    
+            // Start I2C (after addr is in FIFO)
+            ST_WR_CR_2       : if (seq_axi_ack) nstate = ST_WR_TX_FIFO_CHK;
+
+            // Check TX FIFO not full before writing next byte
+            ST_WR_TX_FIFO_CHK: if      (seq_axi_ack && ((seq_axi_rdata & 'h10) == 'h10)) nstate = ST_WR_TX_FIFO_W; // Full, wait
+                               else if (seq_axi_ack)                                      nstate = ST_WR_TX_8;      // Not full, write byte
+            ST_WR_TX_FIFO_W  : nstate = ST_WR_TX_FIFO_CHK; // retry
+
+            // Write data byte to TX FIFO (last byte gets STOP bit)
+            ST_WR_TX_8       : if (seq_axi_ack && last_byte) nstate = ST_CLR_ISR_8;  // done, wait for completion
+                               else if (seq_axi_ack)         nstate = ST_WR_TX_FIFO_CHK; // more bytes
+
             // Wait for TX FIFO EMPTY
             //  -- wait for busy
             ST_CLR_ISR_8     : if      (seq_axi_ack && ((seq_axi_rdata & 'h4) == 'h4) ) nstate = ST_CLR_ISR_A;
                                else if (seq_axi_ack                                   ) nstate = ST_CLR_ISR_9;
             ST_CLR_ISR_9     : nstate = ST_CLR_ISR_8;
-                   
+
             //  -- wait for not busy
             ST_CLR_ISR_A     : if      (seq_axi_ack && ((seq_axi_rdata & 'h4) == 'h0) ) nstate = ST_WR_CR_6;
                                else if (seq_axi_ack                                   ) nstate = ST_CLR_ISR_B;
             ST_CLR_ISR_B     : nstate = ST_CLR_ISR_A;
-    
+
         // -----------------------------------
         // Disable...
             ST_WR_CR_6       : if (seq_axi_ack) nstate = ST_COMPLETE;
-    
+
             ST_COMPLETE      : nstate = ST_IDLE;
     endcase
-end    
+end
+
+// ==============================================================
+//  Byte counter for multi-byte writes
+
+always@(posedge aclk)
+begin
+    if (!aresetn)
+        byte_cnt <= 'h0;
+    else if (IO_CONTROL_PULSE)
+        byte_cnt <= (IO_WCOUNT > 0) ? IO_WCOUNT - 1 : 'h0;
+    else if ((cstate == ST_WR_TX_8) && seq_axi_ack && !last_byte)
+        byte_cnt <= byte_cnt - 1;
+end
+
+// Byte index: counts up from 0 as we send bytes
+reg [3:0] byte_idx;
+always@(posedge aclk)
+begin
+    if (!aresetn)
+        byte_idx <= 'h0;
+    else if (IO_CONTROL_PULSE)
+        byte_idx <= 'h0;
+    else if ((cstate == ST_WR_TX_8) && seq_axi_ack)
+        byte_idx <= byte_idx + 1;
+end
+
+// Select current byte from buffer
+reg [7:0] cur_wbyte;
+always@(*)
+begin
+    case (byte_idx)
+        4'd0: cur_wbyte = IO_WDATA_BUF[ 7: 0];
+        4'd1: cur_wbyte = IO_WDATA_BUF[15: 8];
+        4'd2: cur_wbyte = IO_WDATA_BUF[23:16];
+        4'd3: cur_wbyte = IO_WDATA_BUF[31:24];
+        4'd4: cur_wbyte = IO_WDATA_BUF[39:32];
+        4'd5: cur_wbyte = IO_WDATA_BUF[47:40];
+        4'd6: cur_wbyte = IO_WDATA_BUF[55:48];
+        4'd7: cur_wbyte = IO_WDATA_BUF[63:56];
+        default: cur_wbyte = 'h0;
+    endcase
+end
 
 // ==============================================================
 //  xfr bus controller...
@@ -175,45 +232,50 @@ begin
         // Clear ISR...
         else if (nstate == ST_CLR_ISR_0  )   begin wr_req = 'h0; rd_req = 'h1;  seq_axi_addr <= REG_ISR; end
         else if (nstate == ST_CLR_ISR_2  )   begin wr_req = 'h1; rd_req = 'h0;  seq_axi_addr <= REG_ISR;      seq_axi_wdata <= seq_axi_rdata; end
-    
+
         // Set Rx FIFO Depth
-        else if (nstate == ST_WR_RX_PIRQ_0 ) begin wr_req = 'h1; rd_req = 'h0;  seq_axi_addr <= REG_RX_PIRQ;  seq_axi_wdata <= RD_BYTES-1; end 
-    
+        else if (nstate == ST_WR_RX_PIRQ_0 ) begin wr_req = 'h1; rd_req = 'h0;  seq_axi_addr <= REG_RX_PIRQ;  seq_axi_wdata <= RD_BYTES-1; end
+
         // Write DevID + Wr, Reg Addr
         else if (nstate == ST_WR_TX_0    )   begin wr_req = 'h1; rd_req = 'h0;  seq_axi_addr <= REG_TXFIFO;   seq_axi_wdata <= IO_CONTROL_ID  + BIT_START; end
         else if (nstate == ST_WR_TX_2    )   begin wr_req = 'h1; rd_req = 'h0;  seq_axi_addr <= REG_TXFIFO;   seq_axi_wdata <= IO_ADDR_ADDR; end
-    
+
     // -----------------------------------
     //  Read Operation...
         else if (nstate == ST_WR_TX_4    )   begin wr_req = 'h1; rd_req = 'h0;  seq_axi_addr <= REG_TXFIFO;   seq_axi_wdata <= IO_CONTROL_ID + BIT_START + BIT_RD; end
         else if (nstate == ST_WR_TX_6    )   begin wr_req = 'h1; rd_req = 'h0;  seq_axi_addr <= REG_TXFIFO;   seq_axi_wdata <= RD_BYTES    + BIT_STOP; end
-                                            
-        // Start Tx Process...               
+
+        // Start Tx Process...
         else if (nstate == ST_WR_CR_0    )   begin wr_req = 'h1; rd_req = 'h0;  seq_axi_addr <= REG_CR;       seq_axi_wdata <= 'h000D; end
-                                            
-        // Wait and Clear RX FIFO Full       
+
+        // Wait and Clear RX FIFO Full
         else if (nstate == ST_CLR_ISR_4a  )   begin wr_req = 'h0; rd_req = 'h1;  seq_axi_addr <= REG_SR; end
         else if (nstate == ST_CLR_ISR_6a  )   begin wr_req = 'h0; rd_req = 'h1;  seq_axi_addr <= REG_SR; end
-                                            
-        // Read RX FIFO                      
+
+        // Read RX FIFO
         else if (nstate == ST_RD_RX_0    )   begin wr_req = 'h0; rd_req = 'h1;  seq_axi_addr <= REG_RXFIFO; end
         else if (nstate == ST_RD_RX_2    )   begin wr_req = 'h0; rd_req = 'h1;  seq_axi_addr <= REG_RXFIFO; end
 
     // -----------------------------------
-    //  Write Operation...
-        else if (nstate == ST_WR_TX_8    )   begin wr_req = 'h1; rd_req = 'h0;  seq_axi_addr <= REG_TXFIFO;  seq_axi_wdata <= IO_WDATA_WDATA + BIT_STOP; end
-                                            
-        // Set MSMS, Set Mode            
+    //  Write Operation (multi-byte)...
+
+        // Start I2C (MSMS + Mode)
         else if (nstate == ST_WR_CR_2    )   begin wr_req = 'h1; rd_req = 'h0;  seq_axi_addr <= REG_CR;      seq_axi_wdata <= 'h0005; end
-                                            
-        // Wait and Clear TX FIFO Empty      
+
+        // Check TX FIFO status
+        else if (nstate == ST_WR_TX_FIFO_CHK) begin wr_req = 'h0; rd_req = 'h1; seq_axi_addr <= REG_SR; end
+
+        // Write data byte to TX FIFO
+        else if (nstate == ST_WR_TX_8    )   begin wr_req = 'h1; rd_req = 'h0;  seq_axi_addr <= REG_TXFIFO;  seq_axi_wdata <= last_byte ? (cur_wbyte + BIT_STOP) : cur_wbyte; end
+
+        // Wait and Clear TX FIFO Empty
         else if (nstate == ST_CLR_ISR_8  )   begin wr_req = 'h0; rd_req = 'h1;  seq_axi_addr <= REG_SR; end
         else if (nstate == ST_CLR_ISR_A  )   begin wr_req = 'h0; rd_req = 'h1;  seq_axi_addr <= REG_SR; end
-                                         
+
     // -----------------------------------
-    // Disable                           
+    // Disable
         else if (nstate == ST_WR_CR_6    )   begin wr_req = 'h1; rd_req = 'h0;  seq_axi_addr <= REG_CR;      seq_axi_wdata <= 'h0001; end
-                                         
+
     else                                 begin wr_req = 'h0; rd_req = 'h0; end
 end
 
@@ -239,7 +301,7 @@ begin
         IO_CONTROL_CMPLT <= 'h0;
     else if (nstate == ST_COMPLETE)
         IO_CONTROL_CMPLT <= 'h1;
-end    
+end
 
 always@(posedge aclk)
 begin
@@ -247,8 +309,7 @@ begin
         IO_RDATA_RDATA <= 'h0;
     else if (seq_axi_ack && ( cstate == ST_RD_RX_0))
         IO_RDATA_RDATA <= seq_axi_rdata;
-end    
+end
 
 
 endmodule
-

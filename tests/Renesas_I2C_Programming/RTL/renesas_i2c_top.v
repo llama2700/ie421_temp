@@ -164,6 +164,8 @@ wire [7:0]  user_addr_addr  ;
 wire [7:0]  user_wdata_data ;
 wire [7:0]  user_rdata_data ;
 wire        user_ctrl_cmplt ;
+wire [3:0]  user_wcount     ;
+wire [63:0] user_wdata_buf  ;
 
 wire                           user_wr_req    ;
 wire                           user_rd_req    ;
@@ -183,7 +185,9 @@ reg_i2c_user_logic reg_i2c_user_logic (
     .IO_ADDR_ADDR      ( user_addr_addr    ),
     .IO_WDATA_WDATA    ( user_wdata_data   ),
     .IO_RDATA_RDATA    ( user_rdata_data   ),
-    .IO_CONTROL_CMPLT  ( user_ctrl_cmplt   )
+    .IO_CONTROL_CMPLT  ( user_ctrl_cmplt   ),
+    .IO_WCOUNT         ( user_wcount       ),
+    .IO_WDATA_BUF      ( user_wdata_buf    )
 );
 
 i2c_axi_sequencer #(
@@ -198,6 +202,8 @@ i2c_axi_sequencer #(
     .IO_CONTROL_ID    ( user_ctrl_id      ),
     .IO_ADDR_ADDR     ( user_addr_addr    ),
     .IO_WDATA_WDATA   ( user_wdata_data   ),
+    .IO_WCOUNT        ( user_wcount       ),
+    .IO_WDATA_BUF     ( user_wdata_buf    ),
     .IO_RDATA_RDATA   ( user_rdata_data   ),
     .IO_CONTROL_CMPLT ( user_ctrl_cmplt   ),
 
