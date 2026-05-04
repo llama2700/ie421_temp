@@ -250,10 +250,12 @@ generate
     footer = """\
     // Fallback: unsupported configuration
     else begin : gen_unsupported
+        // synthesis translate_off
         initial begin
-            $error("Error: lfsr_flat does not support this parameter combination");
+            $display("ERROR: lfsr_flat does not support this parameter combination");
             $finish;
         end
+        // synthesis translate_on
         assign state_out = {LFSR_WIDTH{1'b0}};
         assign data_out = {DATA_WIDTH{1'b0}};
     end
