@@ -1,3 +1,6 @@
 [submodule "rtl/lib/corundum"]
 	path = rtl/lib/corundum
 	url = git@github.com:corundum/corundum.git
+[submodule "Alveo-Cards"]
+	path = Alveo-Cards
+	url = git@github.com:llama2700/Alveo-Cards-UL3422.git
