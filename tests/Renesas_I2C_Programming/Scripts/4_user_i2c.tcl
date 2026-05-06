@@ -166,7 +166,7 @@ proc i2c_write_multi {device_id reg_addr byte_list} {
 proc i2c_pread {device_id page_addr} {
     set page [expr {($page_addr >> 8) & 0xFF}]
     set offset [expr {$page_addr & 0xFF}]
-    i2c_write_multi $device_id 0xFC [list 0x20 0x10 $page 0x00]
+    i2c_write_multi $device_id 0xFC [list 0x00 $page 0x10 0x20]
     return [i2c_read $device_id $offset]
 }
 
@@ -175,7 +175,7 @@ proc i2c_pread {device_id page_addr} {
 proc i2c_pwrite {device_id page_addr data} {
     set page [expr {($page_addr >> 8) & 0xFF}]
     set offset [expr {$page_addr & 0xFF}]
-    i2c_write_multi $device_id 0xFC [list 0x20 0x10 $page 0x00]
+    i2c_write_multi $device_id 0xFC [list 0x00 $page 0x10 0x20]
     return [i2c_write $device_id $offset $data]
 }
 
