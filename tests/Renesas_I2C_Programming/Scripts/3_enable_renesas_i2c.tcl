@@ -15,8 +15,8 @@ puts "         Make sure you are ready to modify the clock outputs."
 puts ""
 
 # Trigger VIO probe_out0 = 1 to start I2C sequencer
-set_property OUTPUT_VALUE 1 [get_hw_probes vio_0/probe_out0]
-commit_hw_vio [get_hw_probes vio_0/probe_out0]
+set_property OUTPUT_VALUE 1 [get_hw_probes vio_rstn]
+commit_hw_vio [get_hw_probes vio_rstn]
 
 puts "I2C sequencer triggered."
 puts "Monitor ILA for SCL/SDA activity and xfer_count progress."
