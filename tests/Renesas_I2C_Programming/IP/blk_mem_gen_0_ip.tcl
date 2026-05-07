@@ -73,7 +73,7 @@ set blk_mem_gen_0 [create_ip -name blk_mem_gen -vendor xilinx.com -library ip -v
 # first line changed from:
 # CONFIG.Coe_File {C:/vivprj/ri2c/RTL/sequence/seq_dbg.coe} \  
 set_property -dict [list \
-  CONFIG.Coe_File ${_origin_dir_}/Scripts/example_files/RC38612_avalon_2022april05_config15_v2_lvds_registers.coe \
+  CONFIG.Coe_File ${_origin_dir_}/Scripts/example_fixed/fixed.coe \
   CONFIG.Fill_Remaining_Memory_Locations {true} \
   CONFIG.Load_Init_File {true} \
   CONFIG.Register_PortA_Output_of_Memory_Primitives {false} \

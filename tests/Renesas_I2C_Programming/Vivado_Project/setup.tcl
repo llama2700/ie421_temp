@@ -18,7 +18,7 @@ set _script_dir_ [eval pwd]
 # Set the reference directory to where repo is
 set _origin_dir_ [file dirname ${_script_dir_}]
 
-set _proj_name_ project_1
+set _proj_name_ project_2
 set _part_name_ xcvu2p-fsvj2104-3-e
 set _proj_path_ ${_script_dir_}/${_proj_name_}
 
@@ -36,7 +36,7 @@ create_project -force ${_proj_name_} ${_proj_path_} -part ${_part_name_}
 # ------------------------------------------------------
 
 # add_files -norecurse -scan_for_includes ${_origin_dir_}/RTL/sequence/seq_dbg.coe
-add_files -norecurse -scan_for_includes ${_origin_dir_}/Scripts/example_files/RC38612_avalon_2022april05_config15_v2_lvds_registers.coe
+add_files -norecurse -scan_for_includes ${_origin_dir_}/Scripts/example_fixed/fixed.coe
 add_files -norecurse -scan_for_includes ${_origin_dir_}/RTL/axi_master.v
 add_files -norecurse -scan_for_includes ${_origin_dir_}/RTL/i2c_sequencer.sv
 add_files -norecurse -scan_for_includes ${_origin_dir_}/RTL/i2c_axi_sequencer.v

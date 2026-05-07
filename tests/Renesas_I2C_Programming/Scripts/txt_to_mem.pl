@@ -136,13 +136,13 @@ foreach $temp (@PARAM)
         $size = $size * 2;
         for($ii=0;$ii<$size-2;$ii=$ii+2)
         {
-            $temp = substr($data,$len1-$ii-2,2);
+            $temp = substr($data,2+$ii,2);
             printf SOUT0 ("%02x%s,\n", 0x08, $temp);
             printf SOUT1 ("instru\[%03d\]  = { WDATA_OP      , 8'h%s }\;\n", $nn, $temp);
             $nn++;
         }
         # Last Data byte gets a different identifier...
-        $temp = substr($data,$len1-$ii-2,2);
+        $temp = substr($data,2+$ii,2);
         printf SOUT0 ("%02x%s,\n", 0x10, $temp);
         printf SOUT1 ("instru\[%03d\]  = { WDATA_LAST_OP , 8'h%s }\;\n", $nn, $temp);
         $nn++;
