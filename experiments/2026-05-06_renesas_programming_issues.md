@@ -7,9 +7,9 @@
 
 Working on programming the Renesas RC38612 jitter cleaner chip. To verify success of the provided *Renesas_I2C_Programming* example, we implemented an `i2c_axi_sequencer` module to enable I2C r/w to the JC chip.
 
-After the last issue (see *2026-05-03_renesas_i2c_page_select.md*) we implemented a page-select I2C r/w using register **0xFC**. This r/w functionality works as intended.
+After the last [issue](2026-05-03_renesas_i2c_page_select.md) we implemented a page-select I2C r/w using register **0xFC**. This r/w functionality works as intended.
 
-Using this user I2C r/w, we can verify that the RC38612 chip is getting programmed correctly by the **BRAM + state machine** logic. The test procedure is:
+Using this user I2C r/w, we can verify that the RC38612 chip is getting programmed correctly by the BRAM + state machine logic. The test procedure is:
 
 1. **Corrupt** — Write a known value (e.g. `0xFF`) to a register that the BRAM sequence programs. Choose a safe register (scratch) so the corrupt data won't break anything.
 2. **Program** — Trigger the BRAM + state machine sequence.
@@ -23,7 +23,7 @@ Note that a write to register **0xFC** selects the page, and the data should be 
 This can be found within the Renesas RC38612 Datasheet:
 ![Renesas DS 1B Address Example](./images/00_renesas_programming_issues/renesas_DS_address_eg.jpg)
 
-From Renesas Timing Commander, we can find **scratch registers** that begin at address **0xCF4C**. There should be no risk associated with writing to these addresses.
+From Renesas Timing Commander, we can find scratch registers that begin at address **0xCF4C**. There should be no risk associated with writing to these addresses.
 ![Scratch registers found in TC](./images/00_renesas_programming_issues/TC_scratch_reg.jpg)
 
 From *RC38612_avalon_2022april05_config15_v2_lvds_registers.txt* we can find the following register writes:
@@ -34,7 +34,7 @@ Size: 0xE, Offset: 3C, Data: 0x0535640077003060013505356400
 Size: 0xD, Offset: 4E, Data: 0x0000000000000A070000000000
 ```
 
-The second entry sets **page 0xCF** (offset FC). The third entry writes 13 bytes starting at offset **0x4E**. Reading left-to-right after the `0x` prefix, byte index 6 lands at offset `0x4E + 6 = 0x54` and byte index 7 lands at `0x55`. Therefore, upon successful JC programming:
+The first entry sets **page 0xCF** (offset FC). The third entry writes 13 bytes starting at offset **0x4E**. Reading left-to-right after the `0x` prefix, byte index 6 lands at offset 0x4E + 6 = 0x54 and byte index 7 lands at 0x55. Therefore, upon successful JC programming:
 
 - **`0x0A`** is written to register **0xCF54**
 - **`0x07`** is written to register **0xCF55**
@@ -49,18 +49,18 @@ vivado -mode tcl
 ```tcl
 Vivado% source 1_flash_bitstream.tcl
 Vivado% source 4_user_i2c.tcl
-Vivado% i2c_pwrite 0xB0 0xCF54 0xFF       ;# 1. Corrupt register with 0xFF
-Vivado% i2c_pread 0xB0 0xCF54             ;# Confirm: reads back 0xFF
-Vivado% source 3_enable_renesas_i2c.tcl    ;# 2. Run BRAM programming sequence
-Vivado% i2c_pread 0xB0 0xCF54             ;# 3. Verify: expect 0x0A
+Vivado% i2c_pwrite 0xB0 0xCF54 0xFF       # 1. Corrupt register with 0xFF
+Vivado% i2c_pread 0xB0 0xCF54             # Confirm: reads back 0xFF
+Vivado% source 3_enable_renesas_i2c.tcl   # 2. Run BRAM programming sequence
+Vivado% i2c_pread 0xB0 0xCF54             # 3. Verify: expect 0x0A
 ```
 
-**Expected:** Final read returns **0x0A**.
-**Actual:** Final read returns **0xFF** — the BRAM programming sequence did **not** overwrite the corrupted value. This indicates the Renesas programming launched by *3_enable_renesas_i2c.tcl* is **not working correctly**.
+**Expected:** Final read returns `0x0A`.
+**Actual:** Final read returns `0xFF` — the BRAM programming sequence did **not** overwrite the corrupted value. This indicates the Renesas programming launched by *3_enable_renesas_i2c.tcl* is not working correctly.
 
 ## Root Cause
 
-The Perl script **`txt_to_mem.pl`** (from the AMD reference repo) converts Renesas Timing Commander register export files (`.txt`) into Vivado BRAM `.coe` files. The register file stores multi-byte data as hex strings:
+The Perl script **`txt_to_mem.pl`** (from the AMD reference repo) converts Renesas Timing Commander register export files `.txt` into Vivado BRAM `.coe` files. The register file stores multi-byte data as hex strings:
 
 ```
 Size: 0x4, Offset: FC, Data: 0x00C01020
@@ -94,7 +94,7 @@ These fixes are contained in commit **`9bfb28cc`**.
 
 ## Results
 
-After applying the fix, we re-run the same test sequence. **Full Vivado console output:**
+After applying the fix, we re-run the same test sequence.
 
 ```
 Vivado% i2c_pwrite 0xB0 0xCF54 0xFF
@@ -171,4 +171,4 @@ I2C READ:  dev=0xB0 addr=0x54 => data=0x0A
 10
 ```
 
-The corrupted value `0xFF` at register **0xCF54** was successfully overwritten by the BRAM programming sequence. The final read returns **`0x0A`** — matching the expected value from the register file. **PASS.**
+The corrupted value `0xFF` at register **0xCF54** was successfully overwritten by the BRAM programming sequence. The final read returns **`0x0A`** — matching the expected value from the register file.

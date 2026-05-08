@@ -16,7 +16,14 @@ module renesas_i2c_top #(
 
     // SYNCE reference clocks from jitter cleaner (to measure frequencies)
     input  wire [NUM_SYNCE_CLK-1:0] synce_clk_lvds_p ,
-    input  wire [NUM_SYNCE_CLK-1:0] synce_clk_lvds_n
+    input  wire [NUM_SYNCE_CLK-1:0] synce_clk_lvds_n ,
+
+    // Jitter cleaner GPIO[3:0] config select and active-low reset
+    output wire       jitt1_gpoi0 ,
+    output wire       jitt1_gpoi1 ,
+    output wire       jitt1_gpoi2 ,
+    output wire       jitt1_gpoi3 ,
+    output wire       jitt_resetn
 );
 
 localparam AXI_ADDR_WIDTH_0 = 9;
@@ -48,18 +55,30 @@ clk_wiz_0 clk_wiz_0
 // -----------------------------------------------------------
 
 wire vio_rstn;
+wire [3:0] vio_gpio;
+wire       vio_jitt_resetn;
 reg  vio_rstn_r;
 generate
 if (SIMULATION == "false") begin
     vio_0 vio_0
     (
-        .clk        ( s_axi_aclk    ),
-        .probe_out0 ( vio_rstn      )
+        .clk        ( s_axi_aclk       ),
+        .probe_out0 ( vio_rstn         ),
+        .probe_out1 ( vio_gpio         ),
+        .probe_out2 ( vio_jitt_resetn  )
     );
 end else begin
     assign vio_rstn = vio_rstn_r;
+    assign vio_gpio = 4'b1111;
+    assign vio_jitt_resetn = 1'b1;
 end
 endgenerate
+
+assign jitt1_gpoi0 = vio_gpio[0];
+assign jitt1_gpoi1 = vio_gpio[1];
+assign jitt1_gpoi2 = vio_gpio[2];
+assign jitt1_gpoi3 = vio_gpio[3];
+assign jitt_resetn = vio_jitt_resetn;
 
 // -------------------------------------------------
 

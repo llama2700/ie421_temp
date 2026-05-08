@@ -18,7 +18,7 @@ current_hw_device $device
 refresh_hw_device $device
 
 # Set the bitstream path (adjust if your project path differs)
-set bit_file [glob $::env(HOME)/group_05_project/tests/Renesas_I2C_Programming/Vivado_Project/project_2/project_2.runs/impl_1/*.bit]
+set bit_file [glob $::env(HOME)/group_05_project/tests/Renesas_I2C_Programming/Vivado_Project/project_3/project_3.runs/impl_1/*.bit]
 
 if {$bit_file eq ""} {
     puts "ERROR: No .bit file found in impl_1 directory."
@@ -26,7 +26,7 @@ if {$bit_file eq ""} {
     return
 }
 
-set ltx_file [glob $::env(HOME)/group_05_project/tests/Renesas_I2C_Programming/Vivado_Project/project_2/project_2.runs/impl_1/*.ltx]
+set ltx_file [glob $::env(HOME)/group_05_project/tests/Renesas_I2C_Programming/Vivado_Project/project_3/project_3.runs/impl_1/*.ltx]
 
 set_property PROGRAM.FILE $bit_file $device
 set_property PROBES.FILE $ltx_file $device

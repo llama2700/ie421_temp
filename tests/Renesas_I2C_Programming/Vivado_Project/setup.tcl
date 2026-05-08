@@ -18,7 +18,7 @@ set _script_dir_ [eval pwd]
 # Set the reference directory to where repo is
 set _origin_dir_ [file dirname ${_script_dir_}]
 
-set _proj_name_ project_2
+set _proj_name_ project_3
 set _part_name_ xcvu2p-fsvj2104-3-e
 set _proj_path_ ${_script_dir_}/${_proj_name_}
 

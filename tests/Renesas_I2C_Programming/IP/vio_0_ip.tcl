@@ -68,7 +68,14 @@ if { $bCheckIPsPassed != 1 } {
 set vio_0 [create_ip -name vio -vendor xilinx.com -library ip -version 3.0 -module_name vio_0]
 
 # User Parameters
-set_property CONFIG.C_NUM_PROBE_IN {0} [get_ips vio_0]
+set_property -dict {
+  CONFIG.C_NUM_PROBE_IN  {0}
+  CONFIG.C_NUM_PROBE_OUT {3}
+  CONFIG.C_PROBE_OUT1_WIDTH {4}
+  CONFIG.C_PROBE_OUT1_INIT_VAL {0xF}
+  CONFIG.C_PROBE_OUT2_WIDTH {1}
+  CONFIG.C_PROBE_OUT2_INIT_VAL {0x1}
+} [get_ips vio_0]
 
 # Runtime Parameters
 set_property -dict { 
