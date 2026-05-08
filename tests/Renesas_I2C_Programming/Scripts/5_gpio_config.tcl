@@ -9,7 +9,7 @@
 # VIO probe mapping:
 #   probe_out0 = vio_rstn          (I2C sequencer reset, leave alone)
 #   probe_out1 = vio_gpio[3:0]    (GPIO config select to Renesas)
-#   probe_out2 = vio_jitt_resetn  (active-low Renesas reset)
+#   probe_out2 = jitt_resetn_OBUF  (active-low Renesas reset)
 #
 # Usage:
 #   gpio_set <3:0 binary>    ;# e.g. gpio_set 1100
@@ -18,18 +18,18 @@
 #
 
 proc gpio_set {val} {
-    set_property OUTPUT_VALUE $val [get_hw_probes vio_0/probe_out1]
-    commit_hw_vio [get_hw_probes vio_0/probe_out1]
+    set_property OUTPUT_VALUE $val [get_hw_probes vio_gpio]
+    commit_hw_vio [get_hw_probes vio_gpio]
     puts "GPIO\[3:0\] = $val"
 }
 
 proc jitt_reset {} {
-    set_property OUTPUT_VALUE 0 [get_hw_probes vio_0/probe_out2]
-    commit_hw_vio [get_hw_probes vio_0/probe_out2]
+    set_property OUTPUT_VALUE 0 [get_hw_probes jitt_resetn_OBUF]
+    commit_hw_vio [get_hw_probes jitt_resetn_OBUF]
     puts "jitt_resetn asserted (low)"
     after 200
-    set_property OUTPUT_VALUE 1 [get_hw_probes vio_0/probe_out2]
-    commit_hw_vio [get_hw_probes vio_0/probe_out2]
+    set_property OUTPUT_VALUE 1 [get_hw_probes jitt_resetn_OBUF]
+    commit_hw_vio [get_hw_probes jitt_resetn_OBUF]
     puts "jitt_resetn released (high)"
     puts "Waiting 1s for PLL lock..."
     after 1000
