@@ -993,89 +993,90 @@ generate for (I=0; I<NUM_CHANNEL; I=I+1) begin : gtfmac_hwchk_core_gen
 end
 endgenerate
 
-generate
+genvar K;
+generate for (K=0; K<NUM_CHANNEL; K=K+1) begin : ILA_GEN
     if(ENABLE_MAC_ILA) begin
-        reg         r_tx_axis_tvalid;
-        reg         r_tx_axis_tready;
-        reg  [1:0]  r_tx_axis_tsof;
-        reg  [7:0]  r_tx_axis_tpre;
-        reg  [15:0] r_tx_axis_tdata;
-        reg  [7:0]  r_tx_axis_tlast;
-        reg  [4:0]  r_tx_axis_tterm;
-        reg         r_tx_axis_terr;
+        // reg         r_tx_axis_tvalid;
+        // reg         r_tx_axis_tready;
+        // reg  [1:0]  r_tx_axis_tsof;
+        // reg  [7:0]  r_tx_axis_tpre;
+        // reg  [15:0] r_tx_axis_tdata;
+        // reg  [7:0]  r_tx_axis_tlast;
+        // reg  [4:0]  r_tx_axis_tterm;
+        // reg         r_tx_axis_terr;
 
-        wire         fifo_tx_axis_tvalid;
-        wire         fifo_tx_axis_tready;
-        wire  [1:0]  fifo_tx_axis_tsof;
-        wire  [7:0]  fifo_tx_axis_tpre;
-        wire  [15:0] fifo_tx_axis_tdata;
-        wire  [7:0]  fifo_tx_axis_tlast;
-        wire  [4:0]  fifo_tx_axis_tterm;
-        wire         fifo_tx_axis_terr;
+        // wire         fifo_tx_axis_tvalid;
+        // wire         fifo_tx_axis_tready;
+        // wire  [1:0]  fifo_tx_axis_tsof;
+        // wire  [7:0]  fifo_tx_axis_tpre;
+        // wire  [15:0] fifo_tx_axis_tdata;
+        // wire  [7:0]  fifo_tx_axis_tlast;
+        // wire  [4:0]  fifo_tx_axis_tterm;
+        // wire         fifo_tx_axis_terr;
 
-        always @(posedge tx_axis_clk[0]) begin
-            r_tx_axis_tvalid <= tx_axis_tvalid[0];
-            r_tx_axis_tready <= tx_axis_tready[0];
-            r_tx_axis_tsof   <= tx_axis_tsof[1:0];
-            r_tx_axis_tpre   <= tx_axis_tpre[7:0];
-            r_tx_axis_tdata  <= tx_axis_tdata[15:0];
-            r_tx_axis_tlast  <= tx_axis_tlast[7:0];
-            r_tx_axis_tterm  <= tx_axis_tterm[4:0];
-            r_tx_axis_terr   <= tx_axis_terr[0];
-        end
+        // always @(posedge tx_axis_clk[0]) begin
+        //     r_tx_axis_tvalid <= tx_axis_tvalid[0];
+        //     r_tx_axis_tready <= tx_axis_tready[0];
+        //     r_tx_axis_tsof   <= tx_axis_tsof[1:0];
+        //     r_tx_axis_tpre   <= tx_axis_tpre[7:0];
+        //     r_tx_axis_tdata  <= tx_axis_tdata[15:0];
+        //     r_tx_axis_tlast  <= tx_axis_tlast[7:0];
+        //     r_tx_axis_tterm  <= tx_axis_tterm[4:0];
+        //     r_tx_axis_terr   <= tx_axis_terr[0];
+        // end
 
-        wire tx_fifo_rst; // TODO drive this
-        wire tx_fifo_full;
-        wire tx_fifo_empty;
-        wire tx_fifo_wr_rst_busy;
-        wire tx_fifo_rd_rst_busy;
+        // wire tx_fifo_rst; // TODO drive this
+        // wire tx_fifo_full;
+        // wire tx_fifo_empty;
+        // wire tx_fifo_wr_rst_busy;
+        // wire tx_fifo_rd_rst_busy;
 
-        assign tx_fifo_rst = tx_axis_rst[0];
+        // assign tx_fifo_rst = tx_axis_rst[0];
 
-        fifo_generator_0 i_fifo_tx (
-            .srst(tx_fifo_rst),                // input wire srst
-            .wr_clk(tx_axis_clk),            // input wire wr_clk
-            .rd_clk(freerun_clk),            // input wire rd_clk
-            .din({
-                r_tx_axis_tready,
-                r_tx_axis_tsof,
-                r_tx_axis_tpre,
-                r_tx_axis_tdata,
-                r_tx_axis_tlast,
-                r_tx_axis_tterm,
-                r_tx_axis_terr
-            }),                  // input wire [39 : 0] din
-            .wr_en(r_tx_axis_tvalid & ~tx_fifo_wr_rst_busy & ~tx_fifo_full),              // input wire wr_en
-            .rd_en(fifo_tx_axis_tvalid),              // input wire rd_en
-            .dout({
-                fifo_tx_axis_tready,
-                fifo_tx_axis_tsof,
-                fifo_tx_axis_tpre,
-                fifo_tx_axis_tdata,
-                fifo_tx_axis_tlast,
-                fifo_tx_axis_tterm,
-                fifo_tx_axis_terr
-            }),                // output wire [39 : 0] dout
-            .full(tx_fifo_full),                // output wire full
-            .empty(tx_fifo_empty),              // output wire empty
-            .wr_rst_busy(tx_fifo_wr_rst_busy),  // output wire wr_rst_busy
-            .rd_rst_busy(tx_fifo_rd_rst_busy)  // output wire rd_rst_busy
-        );
+        // fifo_generator_0 i_fifo_tx (
+        //     .srst(tx_fifo_rst),                // input wire srst
+        //     .wr_clk(tx_axis_clk),            // input wire wr_clk
+        //     .rd_clk(freerun_clk),            // input wire rd_clk
+        //     .din({
+        //         r_tx_axis_tready,
+        //         r_tx_axis_tsof,
+        //         r_tx_axis_tpre,
+        //         r_tx_axis_tdata,
+        //         r_tx_axis_tlast,
+        //         r_tx_axis_tterm,
+        //         r_tx_axis_terr
+        //     }),                  // input wire [39 : 0] din
+        //     .wr_en(r_tx_axis_tvalid & ~tx_fifo_wr_rst_busy & ~tx_fifo_full),              // input wire wr_en
+        //     .rd_en(fifo_tx_axis_tvalid),              // input wire rd_en
+        //     .dout({
+        //         fifo_tx_axis_tready,
+        //         fifo_tx_axis_tsof,
+        //         fifo_tx_axis_tpre,
+        //         fifo_tx_axis_tdata,
+        //         fifo_tx_axis_tlast,
+        //         fifo_tx_axis_tterm,
+        //         fifo_tx_axis_terr
+        //     }),                // output wire [39 : 0] dout
+        //     .full(tx_fifo_full),                // output wire full
+        //     .empty(tx_fifo_empty),              // output wire empty
+        //     .wr_rst_busy(tx_fifo_wr_rst_busy),  // output wire wr_rst_busy
+        //     .rd_rst_busy(tx_fifo_rd_rst_busy)  // output wire rd_rst_busy
+        // );
 
-        assign fifo_tx_axis_tvalid = ~tx_fifo_empty & ~tx_fifo_rd_rst_busy;
+        // assign fifo_tx_axis_tvalid = ~tx_fifo_empty & ~tx_fifo_rd_rst_busy;
 
-        mac_ila_0 tx_mac_ila (
-            .clk(freerun_clk), // input wire clk
+        // mac_ila_0 tx_mac_ila (
+        //     .clk(freerun_clk), // input wire clk
 
-            .probe0(fifo_tx_axis_tvalid), // input wire [0:0]  probe0  
-            .probe1(fifo_tx_axis_tready), // input wire [0:0]  probe1 
-            .probe2(fifo_tx_axis_tsof), // input wire [1:0]  probe2 
-            .probe3(fifo_tx_axis_tpre), // input wire [7:0]  probe3 
-            .probe4(fifo_tx_axis_tdata), // input wire [15:0]  probe4 
-            .probe5(fifo_tx_axis_tlast), // input wire [7:0]  probe5 
-            .probe6(fifo_tx_axis_tterm), // input wire [4:0]  probe6 
-            .probe7(fifo_tx_axis_terr) // input wire [0:0]  probe7
-        );
+        //     .probe0(fifo_tx_axis_tvalid), // input wire [0:0]  probe0  
+        //     .probe1(fifo_tx_axis_tready), // input wire [0:0]  probe1 
+        //     .probe2(fifo_tx_axis_tsof), // input wire [1:0]  probe2 
+        //     .probe3(fifo_tx_axis_tpre), // input wire [7:0]  probe3 
+        //     .probe4(fifo_tx_axis_tdata), // input wire [15:0]  probe4 
+        //     .probe5(fifo_tx_axis_tlast), // input wire [7:0]  probe5 
+        //     .probe6(fifo_tx_axis_tterm), // input wire [4:0]  probe6 
+        //     .probe7(fifo_tx_axis_terr) // input wire [0:0]  probe7
+        // );
 
         wire         fifo_rx_axis_tvalid;
         wire         fifo_rx_axis_tready; // Not a thing
@@ -1092,22 +1093,22 @@ generate
         wire rx_fifo_wr_rst_busy;
         wire rx_fifo_rd_rst_busy;
 
-        assign rx_fifo_rst = rx_axis_rst[0];
+        assign rx_fifo_rst = rx_axis_rst[K];
 
         fifo_generator_0 i_fifo_rx (
             .srst(rx_fifo_rst),                // input wire srst
-            .wr_clk(rx_axis_clk),            // input wire wr_clk
+            .wr_clk(rx_axis_clk[K]),            // input wire wr_clk
             .rd_clk(freerun_clk),            // input wire rd_clk
             .din({
                 1'b0,
-                r_rx_axis_tsof[0],
-                r_rx_axis_tpre[0],
-                r_rx_axis_tdata[0][15:0],
-                r_rx_axis_tlast[0],
-                r_rx_axis_tterm[0],
-                r_rx_axis_terr[0]
+                r_rx_axis_tsof[K],
+                r_rx_axis_tpre[K],
+                r_rx_axis_tdata[K][15:0],
+                r_rx_axis_tlast[K],
+                r_rx_axis_tterm[K],
+                r_rx_axis_terr[K]
             }),                  // input wire [39 : 0] din
-            .wr_en(r_rx_axis_tvalid[0] & ~rx_fifo_wr_rst_busy & ~rx_fifo_full),              // input wire wr_en
+            .wr_en(r_rx_axis_tvalid[K] & ~rx_fifo_wr_rst_busy & ~rx_fifo_full),              // input wire wr_en
             .rd_en(fifo_rx_axis_tvalid),              // input wire rd_en
             .dout({
                 fifo_rx_axis_tready,
@@ -1126,19 +1127,30 @@ generate
 
         assign fifo_rx_axis_tvalid = ~rx_fifo_empty & ~rx_fifo_rd_rst_busy;
 
+        reg rx_fifo_rst_astable_freerun;
+        reg rx_fifo_rst_freerun;
+
+        always @(posedge freerun_clk) begin
+            rx_fifo_rst_astable_freerun <= rx_fifo_rst;
+            rx_fifo_rst_freerun <= rx_fifo_rst_astable_freerun;
+        end
+
         // Probe r_rx_axis_* since non-registered mac-output won't meet timing
         mac_ila_0 rx_mac_ila (
             .clk(freerun_clk), // input wire clk
 
             .probe0(fifo_rx_axis_tvalid), // input wire [0:0]  probe0  
-            .probe1(1'b0), // input wire [0:0]  probe1 
+            .probe1(rx_fifo_rst_freerun), // input wire [0:0]  probe1 
             .probe2(fifo_rx_axis_tsof), // input wire [1:0]  probe2 
             .probe3(fifo_rx_axis_tpre), // input wire [7:0]  probe3 
             .probe4(fifo_rx_axis_tdata), // input wire [15:0]  probe4 
             .probe5(fifo_rx_axis_tlast), // input wire [7:0]  probe5 
             .probe6(fifo_rx_axis_tterm), // input wire [4:0]  probe6 
-            .probe7(fifo_rx_axis_terr) // input wire [0:0]  probe7
+            .probe7(fifo_rx_axis_terr), // input wire [0:0]  probe7
+
+            .probe8({rx_fifo_full, rx_fifo_empty, rx_fifo_wr_rst_busy, rx_fifo_rd_rst_busy})
         );
+    end
 end
 endgenerate
 
