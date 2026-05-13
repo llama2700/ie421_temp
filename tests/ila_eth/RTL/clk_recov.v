@@ -673,24 +673,15 @@ wire RECOV_CLK10_INT;
 
 gtf_top_0 #(
     .NUM_CHANNEL  ( NUM_CHANNEL  )
-) gtf_top_1 (
-    // .gtf_ch_gtftxn      ( qsfpdd2_tx_n         ),
-    // .gtf_ch_gtftxp      ( qsfpdd2_tx_p         ),
-    // .gtf_ch_gtfrxn      ( qsfpdd2_rx_n         ),
-    // .gtf_ch_gtfrxp      ( qsfpdd2_rx_p         ),
+) gtf_top_0 (
+    .gtf_ch_gtftxn      ( qsfpdd2_tx_n         ),
+    .gtf_ch_gtftxp      ( qsfpdd2_tx_p         ),
+    .gtf_ch_gtfrxn      ( qsfpdd2_rx_n         ),
+    .gtf_ch_gtfrxp      ( qsfpdd2_rx_p         ),
 
-    // .SYNCE_CLK_LVDS_P   ( synce_clk_130_lvds_p ),
-    // .SYNCE_CLK_LVDS_N   ( synce_clk_130_lvds_n ),
-    // .SYNCE_CLK_OUT      ( SYNCE_CLK_130_INT    ),
-
-    .gtf_ch_gtftxn      ( qsfpdd1_tx_n         ),
-    .gtf_ch_gtftxp      ( qsfpdd1_tx_p         ),
-    .gtf_ch_gtfrxn      ( qsfpdd1_rx_n         ),
-    .gtf_ch_gtfrxp      ( qsfpdd1_rx_p         ),
-
-    .SYNCE_CLK_LVDS_P   ( synce_clk_127_lvds_p ),
-    .SYNCE_CLK_LVDS_N   ( synce_clk_127_lvds_n ),
-    .SYNCE_CLK_OUT      ( SYNCE_CLK_127_INT    ),
+    .SYNCE_CLK_LVDS_P   ( synce_clk_130_lvds_p ),
+    .SYNCE_CLK_LVDS_N   ( synce_clk_130_lvds_n ),
+    .SYNCE_CLK_OUT      ( SYNCE_CLK_130_INT    ),
 
     .gtf_freerun_clk    ( gtf_freerun_clk      ),
     .gtf_sys_clk_out    ( gtf_sys_clk_out      ),
@@ -755,24 +746,15 @@ wire SYNCE_CLK_127_INT;
 
 gtf_top_2 #(
     .NUM_CHANNEL  ( NUM_CHANNEL  )
-) gtf_top_0 (
-    // .gtf_ch_gtftxn      ( qsfpdd1_tx_n         ),
-    // .gtf_ch_gtftxp      ( qsfpdd1_tx_p         ),
-    // .gtf_ch_gtfrxn      ( qsfpdd1_rx_n         ),
-    // .gtf_ch_gtfrxp      ( qsfpdd1_rx_p         ),
+) gtf_top_1 (
+    .gtf_ch_gtftxn      ( qsfpdd1_tx_n         ),
+    .gtf_ch_gtftxp      ( qsfpdd1_tx_p         ),
+    .gtf_ch_gtfrxn      ( qsfpdd1_rx_n         ),
+    .gtf_ch_gtfrxp      ( qsfpdd1_rx_p         ),
 
-    // .SYNCE_CLK_LVDS_P   ( synce_clk_127_lvds_p ),
-    // .SYNCE_CLK_LVDS_N   ( synce_clk_127_lvds_n ),
-    // .SYNCE_CLK_OUT      ( SYNCE_CLK_127_INT    ),
-
-    .gtf_ch_gtftxn      ( qsfpdd2_tx_n         ),
-    .gtf_ch_gtftxp      ( qsfpdd2_tx_p         ),
-    .gtf_ch_gtfrxn      ( qsfpdd2_rx_n         ),
-    .gtf_ch_gtfrxp      ( qsfpdd2_rx_p         ),
-
-    .SYNCE_CLK_LVDS_P   ( synce_clk_130_lvds_p ),
-    .SYNCE_CLK_LVDS_N   ( synce_clk_130_lvds_n ),
-    .SYNCE_CLK_OUT      ( SYNCE_CLK_130_INT    ),
+    .SYNCE_CLK_LVDS_P   ( synce_clk_127_lvds_p ),
+    .SYNCE_CLK_LVDS_N   ( synce_clk_127_lvds_n ),
+    .SYNCE_CLK_OUT      ( SYNCE_CLK_127_INT    ),
 
     .gtf_freerun_clk    ( gtf_freerun_clk      ),
     .gtf_sys_clk_out    ( gtf_sys_clk_out      ),

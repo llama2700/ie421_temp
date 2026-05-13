@@ -7,7 +7,11 @@
 set ADDR_OFFSET_CHAN { 0x100000
                        0x120000
                        0x140000
-                       0x160000 }
+                       0x160000
+                       0x200000
+                       0x220000
+                       0x240000
+                       0x260000 }
                        
 
 # Returns the value of the bits from  [highbit:lowbit]
@@ -247,7 +251,11 @@ proc link_channel { channel }  {
     set ctl_tx_ipg                      0x8			
 
     set ctl_rx_min_packet_len           64
-    set ctl_rx_max_packet_len           64
+    set ctl_rx_max_packet_len           1500
+    if {channel < 4} {
+        # RECOV_CLK test needs 64 packet length else it reports data corrupted
+        set ctl_rx_min_packet_len       64
+    }
     #set frames_to_send                  5000
     # Set to 0 for continuous mode...
     set frames_to_send                  $::frames_to_send

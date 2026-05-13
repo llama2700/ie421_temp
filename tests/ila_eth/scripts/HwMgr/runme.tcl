@@ -57,7 +57,7 @@ proc setup { args } {
     #   link_channel { channel }
     #       channel: 0 to 3
     #       mode   : 0 = near, 1 = far, 2 = normal
-    for {set channel 0} { $channel < $n_chan } {incr channel} {
+    for {set channel 0} { $channel < [expr {$n_chan + 1}] } {incr channel} {
         init_channel $channel 2
         link_channel $channel
     }
