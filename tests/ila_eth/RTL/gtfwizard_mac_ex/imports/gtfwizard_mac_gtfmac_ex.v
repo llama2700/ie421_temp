@@ -11,7 +11,8 @@ SPDX-License-Identifier: MIT
 module gtfwizard_mac_gtfmac_ex # (
     parameter   ONE_SECOND_COUNT   = 28'd200_000_000,
     parameter  integer     NUM_CHANNEL = 1,
-    parameter             ENABLE_MAC_ILA = 0
+    parameter             ENABLE_MAC_ILA = 0,
+    parameter             TX_DISABLE_HW_GEN = 0
 )
 (
 
@@ -380,6 +381,131 @@ assign  clk_wiz_reset =  1'b0;
 assign s_axil_aclk    = axi_aclk      ;
 assign s_axil_aresetn = axi_aresetn[0];
 
+generate
+wire [NUM_CHANNEL-1:0]         replay_tx_axis_tready;
+reg           replay_tx_axis_tvalid;
+reg  [63:0]   replay_tx_axis_tdata;
+reg  [7:0]    replay_tx_axis_tlast;
+wire [7:0]    replay_tx_axis_tpre;
+wire          replay_tx_axis_terr;
+wire [4:0]    replay_tx_axis_tterm;
+reg  [1:0]    replay_tx_axis_tsof;
+wire          replay_tx_axis_tpoison;
+
+if(TX_DISABLE_HW_GEN) begin : gen_tx_axis_tvalid_zero
+    wire replay_tx_begin;
+
+    wire rx_was_valid;
+    reg  rx_was_valid_prev;
+
+    reg  [15:0] tx_replay_rom [0:31];
+    reg  [5:0]  tx_replay_idx;
+    reg         tx_replay_active;
+
+    initial begin
+        // DMAC broadcast ff:Ff:ff:ff:ff
+        tx_replay_rom[0]  = 16'hffff;
+        tx_replay_rom[1]  = 16'hffff;
+        tx_replay_rom[2]  = 16'hffff;
+
+        // SMAC 02:aa:bb:cc:dd:ee
+        tx_replay_rom[3]  = 16'haa02;
+        tx_replay_rom[4]  = 16'hccbb;
+        tx_replay_rom[5]  = 16'heedd;
+
+        // EtherType 0x88b5
+        tx_replay_rom[6]  = 16'hb588;
+
+        // Payload 46 bytes
+        tx_replay_rom[7]  = 16'h4548;
+        tx_replay_rom[8]  = 16'h4c4c;
+        tx_replay_rom[9]  = 16'h5f4f;
+        tx_replay_rom[10] = 16'h4648;
+        tx_replay_rom[11] = 16'h3154;
+        tx_replay_rom[12] = 16'h0031;
+        tx_replay_rom[13] = 16'h0000;
+        tx_replay_rom[14] = 16'h0000;
+        tx_replay_rom[15] = 16'h0000;
+        tx_replay_rom[16] = 16'h0000;
+        tx_replay_rom[17] = 16'h0000;
+        tx_replay_rom[18] = 16'h0000;
+        tx_replay_rom[19] = 16'h0000;
+        tx_replay_rom[20] = 16'h0000;
+        tx_replay_rom[21] = 16'h0000;
+        tx_replay_rom[22] = 16'h0000;
+        tx_replay_rom[23] = 16'h0000;
+        tx_replay_rom[24] = 16'h0000;
+        tx_replay_rom[25] = 16'h0000;
+        tx_replay_rom[26] = 16'h0000;
+        tx_replay_rom[27] = 16'h0000;
+        tx_replay_rom[28] = 16'h0000;
+        tx_replay_rom[29] = 16'h0000;
+
+        // FCS 4 bytes
+        tx_replay_rom[30] = 16'hea30;
+        tx_replay_rom[31] = 16'h5fdf;
+
+        tx_replay_idx = 0;
+    end
+
+    assign replay_tx_axis_tpre = 8'h0;
+    assign replay_tx_axis_terr = 1'b0;
+    assign replay_tx_axis_tterm = 5'b0;
+    assign replay_tx_axis_tpoison = 1'b0;
+
+    assign replay_tx_begin = ~rx_was_valid & rx_was_valid_prev;
+
+    xpm_cdc_single #(
+        .DEST_SYNC_FF(2),   // DECIMAL; range: 2-10
+        .INIT_SYNC_FF(0),   // DECIMAL; 0=disable simulation init values, 1=enable simulation init values
+        .SIM_ASSERT_CHK(0), // DECIMAL; 0=disable simulation messages, 1=enable simulation messages
+        .SRC_INPUT_REG(0)   // DECIMAL; 0=do not register input, 1=register input
+    ) u_tx_rx_tvalid_sync (
+        .dest_out (rx_was_valid),
+        .dest_clk (tx_axis_clk[0]),
+        .src_clk  (rx_axis_clk[0]),
+        .src_in   (r_rx_axis_tvalid[0])
+    );
+
+    always @(posedge tx_axis_clk[0]) begin
+        rx_was_valid_prev <= rx_was_valid;
+    end
+
+    always @(posedge tx_axis_clk[0]) begin
+        if(tx_axis_rst[0]) begin
+            tx_replay_idx <= 0;
+            tx_replay_active <= 1'b0;
+            replay_tx_axis_tvalid <= 1'b0;
+            replay_tx_axis_tsof <= 1'b0;
+        end else begin
+            replay_tx_axis_tvalid <= 1'b0;
+            replay_tx_axis_tsof <= 1'b0;
+            replay_tx_axis_tlast <= 8'b0;
+
+            if(replay_tx_axis_tready[0] & (replay_tx_begin | tx_replay_active)) begin
+                tx_replay_active <= 1'b1;
+                tx_replay_idx <= tx_replay_idx + 1'b1;
+                replay_tx_axis_tvalid <= 1'b1;
+                replay_tx_axis_tdata <= {48'b0, tx_replay_rom[tx_replay_idx]};
+
+                if(tx_replay_idx == 0) begin
+                    replay_tx_axis_tsof <= 2'b1;
+                end
+
+                if(tx_replay_idx == 6'd28) begin
+                    replay_tx_axis_tlast <= 8'h2;
+                end
+
+                if(tx_replay_idx == 6'd31) begin
+                    tx_replay_idx <= 1'b0;
+                    tx_replay_active <= 1'b0;
+                end
+            end
+        end
+    end
+
+end
+endgenerate
 
 genvar i;
 generate for (i=NUM_CHANNEL; i<4; i=i+1) begin : interconnect_tieoffs
@@ -490,21 +616,32 @@ assign int_rx_axis_tvalid[k]  =  ((r_rx_axis_tdata[k][15:0] == 'hdf1c) ||
 //    int_rx_gb_seq_start[k] <= rx_gb_seq_start[k];
 //end
 
-assign  int_tx_axis_tready[k]                          =  tx_axis_tready[k]         ;                        
-assign  tx_axis_tvalid[k]                              =  int_tx_axis_tvalid[k]     ;   
-assign  tx_axis_tdata[64*(k+1)-1:64*k]                 =  int_tx_axis_tdata[k]      ;       
-assign  tx_axis_tlast[8*(k+1)-1:8*k]                   =  int_tx_axis_tlast[k]      ;       
-assign  tx_axis_tpre[8*(k+1)-1:8*k]                    =  int_tx_axis_tpre[k]       ;   
-assign  tx_axis_terr[k]                                =  int_tx_axis_terr[k]       ;   
-assign  tx_axis_tterm[5*(k+1)-1:5*k]                   =  int_tx_axis_tterm[k]      ;   
-assign  tx_axis_tsof[2*(k+1)-1:2*k]                    =  int_tx_axis_tsof[k]       ;   
-assign  tx_axis_tpoison[k]                             =  int_tx_axis_tpoison[k]    ;  
-assign  int_tx_axis_tcan_start[k]                      =  tx_axis_tcan_start[k]     ;       
-assign  int_tx_ptp_sop[k]                              =  tx_ptp_sop[k]             ;   
-assign  int_tx_ptp_sop_pos[k]                          =  tx_ptp_sop_pos[k]         ;   
-assign  int_tx_gb_seq_start[k]                         =  tx_gb_seq_start[k]        ;   
-assign  int_tx_unfout[k]                               =  tx_unfout[k]              ;
-
+if (TX_DISABLE_HW_GEN) begin
+    assign  replay_tx_axis_tready[k]                       =  tx_axis_tready[k]         ;
+    assign  tx_axis_tvalid[k]                              =  replay_tx_axis_tvalid     ;
+    assign  tx_axis_tdata[64*(k+1)-1:64*k]                 =  replay_tx_axis_tdata      ;
+    assign  tx_axis_tlast[8*(k+1)-1:8*k]                   =  replay_tx_axis_tlast      ;
+    assign  tx_axis_tpre[8*(k+1)-1:8*k]                    =  replay_tx_axis_tpre       ;
+    assign  tx_axis_terr[k]                                =  replay_tx_axis_terr       ;
+    assign  tx_axis_tterm[5*(k+1)-1:5*k]                   =  replay_tx_axis_tterm      ;
+    assign  tx_axis_tsof[2*(k+1)-1:2*k]                    =  replay_tx_axis_tsof       ;
+    assign  tx_axis_tpoison[k]                             =  replay_tx_axis_tpoison    ;
+end else begin
+    assign  int_tx_axis_tready[k]                          =  tx_axis_tready[k]         ;                        
+    assign  tx_axis_tvalid[k]                              =  int_tx_axis_tvalid[k]     ;   
+    assign  tx_axis_tdata[64*(k+1)-1:64*k]                 =  int_tx_axis_tdata[k]      ;       
+    assign  tx_axis_tlast[8*(k+1)-1:8*k]                   =  int_tx_axis_tlast[k]      ;       
+    assign  tx_axis_tpre[8*(k+1)-1:8*k]                    =  int_tx_axis_tpre[k]       ;   
+    assign  tx_axis_terr[k]                                =  int_tx_axis_terr[k]       ;   
+    assign  tx_axis_tterm[5*(k+1)-1:5*k]                   =  int_tx_axis_tterm[k]      ;   
+    assign  tx_axis_tsof[2*(k+1)-1:2*k]                    =  int_tx_axis_tsof[k]       ;   
+    assign  tx_axis_tpoison[k]                             =  int_tx_axis_tpoison[k]    ;  
+end
+    assign  int_tx_axis_tcan_start[k]                      =  tx_axis_tcan_start[k]     ;       
+    assign  int_tx_ptp_sop[k]                              =  tx_ptp_sop[k]             ;   
+    assign  int_tx_ptp_sop_pos[k]                          =  tx_ptp_sop_pos[k]         ;   
+    assign  int_tx_gb_seq_start[k]                         =  tx_gb_seq_start[k]        ;   
+    assign  int_tx_unfout[k]                               =  tx_unfout[k]              ;
 
 end
 endgenerate

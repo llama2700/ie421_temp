@@ -251,10 +251,11 @@ proc link_channel { channel }  {
     set ctl_tx_ipg                      0x8			
 
     set ctl_rx_min_packet_len           64
-    set ctl_rx_max_packet_len           1500
-    if {channel < 4} {
+    set ctl_rx_max_packet_len           64
+    if {channel > 3} {
         # RECOV_CLK test needs 64 packet length else it reports data corrupted
-        set ctl_rx_min_packet_len       64
+        set ctl_rx_min_packet_len       1500
+        set ctl_txstart_framing_enable  0x1
     }
     #set frames_to_send                  5000
     # Set to 0 for continuous mode...
