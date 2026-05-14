@@ -15,7 +15,7 @@
                     },
                     {
                         "type": "ILA_V3",
-                        "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].rx_mac_ila",
+                        "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].tx_mac_ila",
                         "spec": "labtools_ila_v6",
                         "ipName": "ila",
                         "core_location": {
@@ -23,360 +23,11 @@
                             "slave_index": 0,
                             "bscan_switch_index": 0
                         },
-                        "uuid": "D7EDAF4BA4305A2CB26966270ED9EFB7",
-                        "pins": [
-                            {
-                                "name": "probe0",
-                                "id": 0,
-                                "type": "DATA_TRIGGER",
-                                "direction": "IN",
-                                "isVector": false,
-                                "leftIndex": 0,
-                                "rightIndex": 0,
-                                "portIndex": 0,
-                                "nets": [
-                                    {
-                                        "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tvalid",
-                                        "isBus": false
-                                    }
-                                ]
-                            },
-                            {
-                                "name": "probe1",
-                                "id": 1,
-                                "type": "DATA_TRIGGER",
-                                "direction": "IN",
-                                "isVector": false,
-                                "leftIndex": 0,
-                                "rightIndex": 0,
-                                "portIndex": 1,
-                                "nets": [
-                                    {
-                                        "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].rx_fifo_rst_freerun",
-                                        "isBus": false
-                                    }
-                                ]
-                            },
-                            {
-                                "name": "probe2",
-                                "id": 2,
-                                "type": "DATA_TRIGGER",
-                                "direction": "IN",
-                                "isVector": true,
-                                "leftIndex": 0,
-                                "rightIndex": 1,
-                                "portIndex": 2,
-                                "nets": [
-                                    {
-                                        "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tsof",
-                                        "isBus": true,
-                                        "subnets": [
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tsof[1]"
-                                            },
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tsof[0]"
-                                            }
-                                        ]
-                                    }
-                                ]
-                            },
-                            {
-                                "name": "probe3",
-                                "id": 3,
-                                "type": "DATA_TRIGGER",
-                                "direction": "IN",
-                                "isVector": true,
-                                "leftIndex": 0,
-                                "rightIndex": 7,
-                                "portIndex": 3,
-                                "nets": [
-                                    {
-                                        "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tpre",
-                                        "isBus": true,
-                                        "subnets": [
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tpre[7]"
-                                            },
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tpre[6]"
-                                            },
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tpre[5]"
-                                            },
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tpre[4]"
-                                            },
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tpre[3]"
-                                            },
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tpre[2]"
-                                            },
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tpre[1]"
-                                            },
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tpre[0]"
-                                            }
-                                        ]
-                                    }
-                                ]
-                            },
-                            {
-                                "name": "probe4",
-                                "id": 4,
-                                "type": "DATA",
-                                "direction": "IN",
-                                "isVector": true,
-                                "leftIndex": 0,
-                                "rightIndex": 15,
-                                "portIndex": 4,
-                                "nets": [
-                                    {
-                                        "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tdata",
-                                        "isBus": true,
-                                        "subnets": [
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tdata[15]"
-                                            },
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tdata[14]"
-                                            },
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tdata[13]"
-                                            },
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tdata[12]"
-                                            },
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tdata[11]"
-                                            },
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tdata[10]"
-                                            },
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tdata[9]"
-                                            },
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tdata[8]"
-                                            },
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tdata[7]"
-                                            },
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tdata[6]"
-                                            },
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tdata[5]"
-                                            },
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tdata[4]"
-                                            },
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tdata[3]"
-                                            },
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tdata[2]"
-                                            },
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tdata[1]"
-                                            },
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tdata[0]"
-                                            }
-                                        ]
-                                    }
-                                ]
-                            },
-                            {
-                                "name": "probe5",
-                                "id": 5,
-                                "type": "DATA_TRIGGER",
-                                "direction": "IN",
-                                "isVector": true,
-                                "leftIndex": 0,
-                                "rightIndex": 7,
-                                "portIndex": 5,
-                                "nets": [
-                                    {
-                                        "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tlast",
-                                        "isBus": true,
-                                        "subnets": [
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tlast[7]"
-                                            },
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tlast[6]"
-                                            },
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tlast[5]"
-                                            },
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tlast[4]"
-                                            },
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tlast[3]"
-                                            },
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tlast[2]"
-                                            },
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tlast[1]"
-                                            },
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tlast[0]"
-                                            }
-                                        ]
-                                    }
-                                ]
-                            },
-                            {
-                                "name": "probe6",
-                                "id": 6,
-                                "type": "DATA_TRIGGER",
-                                "direction": "IN",
-                                "isVector": true,
-                                "leftIndex": 0,
-                                "rightIndex": 4,
-                                "portIndex": 6,
-                                "nets": [
-                                    {
-                                        "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tterm",
-                                        "isBus": true,
-                                        "subnets": [
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tterm[4]"
-                                            },
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tterm[3]"
-                                            },
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tterm[2]"
-                                            },
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tterm[1]"
-                                            },
-                                            {
-                                                "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_tterm[0]"
-                                            }
-                                        ]
-                                    }
-                                ]
-                            },
-                            {
-                                "name": "probe7",
-                                "id": 7,
-                                "type": "DATA_TRIGGER",
-                                "direction": "IN",
-                                "isVector": false,
-                                "leftIndex": 0,
-                                "rightIndex": 0,
-                                "portIndex": 7,
-                                "nets": [
-                                    {
-                                        "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].fifo_rx_axis_terr",
-                                        "isBus": false
-                                    }
-                                ]
-                            },
-                            {
-                                "name": "probe8",
-                                "id": 8,
-                                "type": "DATA_TRIGGER",
-                                "direction": "IN",
-                                "isVector": true,
-                                "leftIndex": 0,
-                                "rightIndex": 0,
-                                "portIndex": 8,
-                                "nets": [
-                                    {
-                                        "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].rx_fifo_rd_rst_busy",
-                                        "isBus": false
-                                    }
-                                ]
-                            },
-                            {
-                                "name": "probe8",
-                                "id": 9,
-                                "type": "DATA_TRIGGER",
-                                "direction": "IN",
-                                "isVector": true,
-                                "leftIndex": 1,
-                                "rightIndex": 1,
-                                "portIndex": 8,
-                                "nets": [
-                                    {
-                                        "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].rx_fifo_wr_rst_busy",
-                                        "isBus": false
-                                    }
-                                ]
-                            },
-                            {
-                                "name": "probe8",
-                                "id": 10,
-                                "type": "DATA_TRIGGER",
-                                "direction": "IN",
-                                "isVector": true,
-                                "leftIndex": 2,
-                                "rightIndex": 2,
-                                "portIndex": 8,
-                                "nets": [
-                                    {
-                                        "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].rx_fifo_empty",
-                                        "isBus": false
-                                    }
-                                ]
-                            },
-                            {
-                                "name": "probe8",
-                                "id": 11,
-                                "type": "DATA_TRIGGER",
-                                "direction": "IN",
-                                "isVector": true,
-                                "leftIndex": 3,
-                                "rightIndex": 3,
-                                "portIndex": 8,
-                                "nets": [
-                                    {
-                                        "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].rx_fifo_full",
-                                        "isBus": false
-                                    }
-                                ]
-                            },
-                            {
-                                "name": "probe9",
-                                "id": 12,
-                                "type": "DATA_TRIGGER",
-                                "direction": "IN",
-                                "isVector": false,
-                                "leftIndex": 0,
-                                "rightIndex": 0,
-                                "portIndex": 9,
-                                "nets": [
-                                    {
-                                        "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].rx_fifo_ren",
-                                        "isBus": false
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        "type": "ILA_V3",
-                        "name": "gtf_top_1/u_gtfwizard_0_example_gtfmac_top/ILA_GEN[0].tx_mac_ila",
-                        "spec": "labtools_ila_v6",
-                        "ipName": "ila",
-                        "core_location": {
-                            "user_chain": 1,
-                            "slave_index": 1,
-                            "bscan_switch_index": 0
-                        },
                         "uuid": "5BC31D47E5485AF4ADB7720308C52C11",
                         "pins": [
                             {
                                 "name": "probe0",
-                                "id": 13,
+                                "id": 0,
                                 "type": "DATA_TRIGGER",
                                 "direction": "IN",
                                 "isVector": false,
@@ -392,7 +43,7 @@
                             },
                             {
                                 "name": "probe1",
-                                "id": 14,
+                                "id": 1,
                                 "type": "DATA_TRIGGER",
                                 "direction": "IN",
                                 "isVector": false,
@@ -408,7 +59,7 @@
                             },
                             {
                                 "name": "probe2",
-                                "id": 15,
+                                "id": 2,
                                 "type": "DATA_TRIGGER",
                                 "direction": "IN",
                                 "isVector": true,
@@ -432,7 +83,7 @@
                             },
                             {
                                 "name": "probe3",
-                                "id": 16,
+                                "id": 3,
                                 "type": "DATA_TRIGGER",
                                 "direction": "IN",
                                 "isVector": true,
@@ -474,7 +125,7 @@
                             },
                             {
                                 "name": "probe4",
-                                "id": 17,
+                                "id": 4,
                                 "type": "DATA",
                                 "direction": "IN",
                                 "isVector": true,
@@ -540,7 +191,7 @@
                             },
                             {
                                 "name": "probe5",
-                                "id": 18,
+                                "id": 5,
                                 "type": "DATA_TRIGGER",
                                 "direction": "IN",
                                 "isVector": true,
@@ -582,7 +233,7 @@
                             },
                             {
                                 "name": "probe6",
-                                "id": 19,
+                                "id": 6,
                                 "type": "DATA_TRIGGER",
                                 "direction": "IN",
                                 "isVector": true,
@@ -615,7 +266,7 @@
                             },
                             {
                                 "name": "probe7",
-                                "id": 20,
+                                "id": 7,
                                 "type": "DATA_TRIGGER",
                                 "direction": "IN",
                                 "isVector": false,
@@ -631,7 +282,7 @@
                             },
                             {
                                 "name": "probe8",
-                                "id": 21,
+                                "id": 8,
                                 "type": "DATA_TRIGGER",
                                 "direction": "IN",
                                 "isVector": true,
@@ -647,7 +298,7 @@
                             },
                             {
                                 "name": "probe8",
-                                "id": 22,
+                                "id": 9,
                                 "type": "DATA_TRIGGER",
                                 "direction": "IN",
                                 "isVector": true,
@@ -663,7 +314,7 @@
                             },
                             {
                                 "name": "probe8",
-                                "id": 23,
+                                "id": 10,
                                 "type": "DATA_TRIGGER",
                                 "direction": "IN",
                                 "isVector": true,
@@ -679,7 +330,7 @@
                             },
                             {
                                 "name": "probe8",
-                                "id": 24,
+                                "id": 11,
                                 "type": "DATA_TRIGGER",
                                 "direction": "IN",
                                 "isVector": true,
@@ -695,7 +346,7 @@
                             },
                             {
                                 "name": "probe9",
-                                "id": 25,
+                                "id": 12,
                                 "type": "DATA_TRIGGER",
                                 "direction": "IN",
                                 "isVector": false,
@@ -718,7 +369,7 @@
                         "ipName": "jtag_axi",
                         "core_location": {
                             "user_chain": 1,
-                            "slave_index": 2,
+                            "slave_index": 1,
                             "bscan_switch_index": 0
                         },
                         "uuid": "249AE0964AA75E66B473A93C204238D9"
