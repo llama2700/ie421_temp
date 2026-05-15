@@ -148,8 +148,7 @@ endgenerate
     
 gtfwizard_mac_gtfmac_ex # (
     .ONE_SECOND_COUNT   (28'h1000),  // for simulation purposes
-    .NUM_CHANNEL        (NUM_CHANNEL),
-    .ENABLE_MAC_ILA     (1)
+    .NUM_CHANNEL        (NUM_CHANNEL)
 )  u_gtfwizard_0_example_gtfmac_top (
 
     .gtf_ch_gtftxn                      ( gtf_ch_gtftxn              ), 
