@@ -3,8 +3,8 @@
   "ip_inst": {
     "xci_name": "gtfwizard_raw",
     "component_reference": "xilinx.com:ip:gtfwizard:1.0",
-    "ip_revision": "4",
-    "gen_directory": "../../../../gtfwizard_raw_ex.gen/sources_1/ip/gtfwizard_raw",
+    "ip_revision": "7",
+    "gen_directory": "../../../../project_1.gen/sources_1/ip/gtfwizard_raw",
     "parameters": {
       "component_parameters": {
         "GT_TYPE": [ { "value": "GTF", "resolve_type": "user", "usage": "all" } ],
@@ -217,21 +217,20 @@
         "BASE_BOARD_PART": [ { "value": "" } ],
         "BOARD_CONNECTIONS": [ { "value": "" } ],
         "DEVICE": [ { "value": "xcvu2p" } ],
+        "NEXTGEN_VERSAL": [ { "value": "0" } ],
         "PACKAGE": [ { "value": "fsvj2104" } ],
         "PREFHDL": [ { "value": "VERILOG" } ],
         "SILICON_REVISION": [ { "value": "" } ],
         "SIMULATOR_LANGUAGE": [ { "value": "MIXED" } ],
         "SPEEDGRADE": [ { "value": "-3" } ],
         "STATIC_POWER": [ { "value": "" } ],
-        "TEMPERATURE_GRADE": [ { "value": "E" } ],
-        "USE_RDI_CUSTOMIZATION": [ { "value": "TRUE" } ],
-        "USE_RDI_GENERATION": [ { "value": "TRUE" } ]
+        "TEMPERATURE_GRADE": [ { "value": "E" } ]
       },
       "runtime_parameters": {
         "IPCONTEXT": [ { "value": "IP_Flow" } ],
-        "IPREVISION": [ { "value": "4" } ],
+        "IPREVISION": [ { "value": "7" } ],
         "MANAGED": [ { "value": "TRUE" } ],
-        "OUTPUTDIR": [ { "value": "../../../../gtfwizard_raw_ex.gen/sources_1/ip/gtfwizard_raw" } ],
+        "OUTPUTDIR": [ { "value": "../../../../project_1.gen/sources_1/ip/gtfwizard_raw" } ],
         "SELECTEDSIMMODEL": [ { "value": "" } ],
         "SHAREDDIR": [ { "value": "." } ],
         "SWVERSION": [ { "value": "2024.1" } ],

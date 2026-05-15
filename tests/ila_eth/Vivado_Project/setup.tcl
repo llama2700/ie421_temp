@@ -58,6 +58,7 @@ add_files -fileset sources_1 ${_origin_dir_}/RTL/clk_recov.v
 
 add_files -fileset sources_1 ${_origin_dir_}/RTL/gtf/gtf_top_0.v
 add_files -fileset sources_1 ${_origin_dir_}/RTL/gtf/gtf_top_1.v
+add_files -fileset sources_1 ${_origin_dir_}/RTL/gtf/gtf_top_2.v
 
 # GTF wizard example design sources -- regenerate per RTL/gtfwizard_*_ex/README.md
 foreach _f [glob -nocomplain ${_origin_dir_}/RTL/gtfwizard_mac_ex/imports/*.{v,sv,vh}] {
@@ -78,6 +79,15 @@ if { [file exist ${_origin_dir_}/RTL/gtfwizard_mac_ex/ip/gtfwizard_mac_axi_cross
 }
 if { [file exist ${_origin_dir_}/RTL/gtfwizard_mac_ex/ip/gtfwizard_mac_example_axil_ctrl.tcl] } {
     source ${_origin_dir_}/RTL/gtfwizard_mac_ex/ip/gtfwizard_mac_example_axil_ctrl.tcl
+}
+if { [file exist ${_origin_dir_}/RTL/gtfwizard_mac_ex/ip/gtfwizard_mac_example_axil_ctrl.tcl] } {
+    source ${_origin_dir_}/RTL/gtfwizard_mac_ex/ip/gtfwizard_mac_example_axil_ctrl.tcl
+}
+if { [file exist ${_origin_dir_}/RTL/gtfwizard_mac_ex/ip/fifo_generator_0_ip.tcl] } {
+    source ${_origin_dir_}/RTL/gtfwizard_mac_ex/ip/fifo_generator_0_ip.tcl
+}
+if { [file exist ${_origin_dir_}/RTL/gtfwizard_mac_ex/ip/mac_ila_0_ip.tcl] } {
+    source ${_origin_dir_}/RTL/gtfwizard_mac_ex/ip/mac_ila_0_ip.tcl
 }
 
 update_compile_order -fileset sources_1
