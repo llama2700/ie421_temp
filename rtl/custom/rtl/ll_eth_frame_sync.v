@@ -11,6 +11,8 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
+import ll_eth_cfg::*;
+
 module ll_eth_frame_sync #(
     parameter HDR_WIDTH          = 2,
     parameter BITSLIP_HIGH_CYCLES = 1,
@@ -39,10 +41,6 @@ initial begin
         $finish;
     end
 end
-
-localparam [1:0]
-    SYNC_DATA = 2'b10,
-    SYNC_CTRL = 2'b01;
 
 reg [5:0]                      sh_count_reg          = 6'd0, sh_count_next;
 reg [3:0]                      sh_invalid_count_reg  = 4'd0, sh_invalid_count_next;

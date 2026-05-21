@@ -17,6 +17,8 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
+import ll_eth_cfg::*;
+
 module ll_eth_rx #(
     parameter DATA_WIDTH       = 64,
     parameter HDR_WIDTH        = 2,
@@ -61,40 +63,21 @@ initial begin
     end
 end
 
-// ---------------------------------------------------------------
-// 10GBASE-R block type constants
-// ---------------------------------------------------------------
-localparam [1:0]
-    SYNC_DATA = 2'b10,
-    SYNC_CTRL = 2'b01;
-
-localparam [7:0]
-    BLOCK_TYPE_CTRL    = 8'h1e,
-    BLOCK_TYPE_START_4 = 8'h33,
-    BLOCK_TYPE_START_0 = 8'h78,
-    BLOCK_TYPE_TERM_0  = 8'h87,
-    BLOCK_TYPE_TERM_1  = 8'h99,
-    BLOCK_TYPE_TERM_2  = 8'haa,
-    BLOCK_TYPE_TERM_3  = 8'hb4,
-    BLOCK_TYPE_TERM_4  = 8'hcc,
-    BLOCK_TYPE_TERM_5  = 8'hd2,
-    BLOCK_TYPE_TERM_6  = 8'he1,
-    BLOCK_TYPE_TERM_7  = 8'hff;
-
+// Local aliases for backward compatibility
 localparam [3:0]
-    INPUT_TYPE_IDLE    = 4'd0,
-    INPUT_TYPE_ERROR   = 4'd1,
-    INPUT_TYPE_START_0 = 4'd2,
-    INPUT_TYPE_START_4 = 4'd3,
-    INPUT_TYPE_DATA    = 4'd4,
-    INPUT_TYPE_TERM_0  = 4'd8,
-    INPUT_TYPE_TERM_1  = 4'd9,
-    INPUT_TYPE_TERM_2  = 4'd10,
-    INPUT_TYPE_TERM_3  = 4'd11,
-    INPUT_TYPE_TERM_4  = 4'd12,
-    INPUT_TYPE_TERM_5  = 4'd13,
-    INPUT_TYPE_TERM_6  = 4'd14,
-    INPUT_TYPE_TERM_7  = 4'd15;
+    INPUT_TYPE_IDLE    = TYPE_IDLE,
+    INPUT_TYPE_ERROR   = TYPE_ERROR,
+    INPUT_TYPE_START_0 = TYPE_START_0,
+    INPUT_TYPE_START_4 = TYPE_START_4,
+    INPUT_TYPE_DATA    = TYPE_DATA,
+    INPUT_TYPE_TERM_0  = TYPE_TERM_0,
+    INPUT_TYPE_TERM_1  = TYPE_TERM_1,
+    INPUT_TYPE_TERM_2  = TYPE_TERM_2,
+    INPUT_TYPE_TERM_3  = TYPE_TERM_3,
+    INPUT_TYPE_TERM_4  = TYPE_TERM_4,
+    INPUT_TYPE_TERM_5  = TYPE_TERM_5,
+    INPUT_TYPE_TERM_6  = TYPE_TERM_6,
+    INPUT_TYPE_TERM_7  = TYPE_TERM_7;
 
 localparam
     STATE_IDLE    = 1'b0,

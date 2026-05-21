@@ -12,6 +12,8 @@
 `timescale 1ns / 1ps
 `default_nettype none
 
+import ll_eth_cfg::*;
+
 module ll_eth_tx #(
     parameter DATA_WIDTH       = 64,
     parameter HDR_WIDTH        = 2,
@@ -56,48 +58,21 @@ initial begin
     end
 end
 
-// ---------------------------------------------------------------
-// Constants
-// ---------------------------------------------------------------
-localparam [7:0]
-    ETH_PRE = 8'h55,
-    ETH_SFD = 8'hD5;
-
-localparam [6:0]
-    CTRL_IDLE  = 7'h00,
-    CTRL_ERROR = 7'h1e;
-
-localparam [1:0]
-    SYNC_DATA = 2'b10,
-    SYNC_CTRL = 2'b01;
-
-localparam [7:0]
-    BLOCK_TYPE_CTRL    = 8'h1e,
-    BLOCK_TYPE_START_4 = 8'h33,
-    BLOCK_TYPE_START_0 = 8'h78,
-    BLOCK_TYPE_TERM_0  = 8'h87,
-    BLOCK_TYPE_TERM_1  = 8'h99,
-    BLOCK_TYPE_TERM_2  = 8'haa,
-    BLOCK_TYPE_TERM_3  = 8'hb4,
-    BLOCK_TYPE_TERM_4  = 8'hcc,
-    BLOCK_TYPE_TERM_5  = 8'hd2,
-    BLOCK_TYPE_TERM_6  = 8'he1,
-    BLOCK_TYPE_TERM_7  = 8'hff;
-
+// Local aliases for backward compatibility
 localparam [3:0]
-    OUTPUT_TYPE_IDLE    = 4'd0,
-    OUTPUT_TYPE_ERROR   = 4'd1,
-    OUTPUT_TYPE_START_0 = 4'd2,
-    OUTPUT_TYPE_START_4 = 4'd3,
-    OUTPUT_TYPE_DATA    = 4'd4,
-    OUTPUT_TYPE_TERM_0  = 4'd8,
-    OUTPUT_TYPE_TERM_1  = 4'd9,
-    OUTPUT_TYPE_TERM_2  = 4'd10,
-    OUTPUT_TYPE_TERM_3  = 4'd11,
-    OUTPUT_TYPE_TERM_4  = 4'd12,
-    OUTPUT_TYPE_TERM_5  = 4'd13,
-    OUTPUT_TYPE_TERM_6  = 4'd14,
-    OUTPUT_TYPE_TERM_7  = 4'd15;
+    OUTPUT_TYPE_IDLE    = TYPE_IDLE,
+    OUTPUT_TYPE_ERROR   = TYPE_ERROR,
+    OUTPUT_TYPE_START_0 = TYPE_START_0,
+    OUTPUT_TYPE_START_4 = TYPE_START_4,
+    OUTPUT_TYPE_DATA    = TYPE_DATA,
+    OUTPUT_TYPE_TERM_0  = TYPE_TERM_0,
+    OUTPUT_TYPE_TERM_1  = TYPE_TERM_1,
+    OUTPUT_TYPE_TERM_2  = TYPE_TERM_2,
+    OUTPUT_TYPE_TERM_3  = TYPE_TERM_3,
+    OUTPUT_TYPE_TERM_4  = TYPE_TERM_4,
+    OUTPUT_TYPE_TERM_5  = TYPE_TERM_5,
+    OUTPUT_TYPE_TERM_6  = TYPE_TERM_6,
+    OUTPUT_TYPE_TERM_7  = TYPE_TERM_7;
 
 localparam [2:0]
     STATE_IDLE     = 3'd0,
