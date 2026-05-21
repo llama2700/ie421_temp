@@ -1,0 +1,93 @@
+# Binh
+- Flashed a bitstream to UL3422!
+- ILA working (counter)
+- Corundum flash to 3422 (probably a few weeks out)... need to first:
+  - PCIe and Transceiver bringup
+  - Linux drivers for NIC
+
+- Help andrew flash bitstream today
+- Send traffic and read on UL3422 ILA
+
+# Andrew (PMA loopback)
+
+- Bitstream is done, tcl ready to flash on hft11
+- Next is the full frame loopback (using solarflare X2 + wireshark)
+
+# Abhi
+- Config scripts for DFE opt controllers, seem to work
+- State machines have basic TBs now
+- Porting corudnum rtl/lib/corundum/docs/source/porting.rst this week
+- Help figure out MAC addresses and picking up packets from X2 on wireshark hft11
+- X2 broadcast to everyone? solarflare00:0f
+
+# Guyan
+- First version of the adapter/wrapper to mqnic_app_block
+- Need to wait for Corundum bringup complete to flash and test
+- AXI logic in wrapper
+
+
+Corudnum porting claude advice
+                                                                                                                                                                                                                                                           
+  1. Pick a Reference Board Design                                                                                                                                                                                                                                                           
+                                                                                                                                                                                                                                                                                             
+  Browse the supported boards under rtl/lib/corundum/fpga/mqnic/ — there are 40+ variants (Alveo U50/U200/U250/U280, VCU118, ZCU102, Intel Agilex, etc.). Find the one closest to your target FPGA and copy its directory as a starting point.                                               
+                                                                                                                                                                                                                                                                                             
+  2. Port the Design (if no exact match exists)                                                                                                                                                                                                                                              
+                                                                                                                                                                                                                                                                                             
+  Follow the porting guide at rtl/lib/corundum/docs/source/porting.rst:                                                                                                                                                                                                                      
+  - Create board-specific RTL top-level (fpga_<board>.v)
+  - Set up constraint files (.xdc) for your board's pin assignments                                                                                                                                                                                                                          
+  - Configure config.tcl — FPGA ID, board vendor/device IDs, PCIe IDs, port count, clock period, queue sizing
+  - Wire up PCIe, Ethernet, I2C, and flash interfaces                                                                                                                                                                                                                                        
+                                                                                                                                                                                                                                                                                             
+  3. Build the Bitstream                                                                                                                                                                                                                                                                     
+                                                                                                                                                                                                                                                                                             
+  source /opt/Xilinx/Vivado/<VERSION>/settings64.sh                                                                                                                                                                                                                                          
+  cd rtl/lib/corundum/fpga/mqnic/<BOARD>/<VARIANT>/                                                                                                                                                                                                                                          
+  make          # Runs Vivado synthesis + implementation → generates fpga.bit                                                                                                                                                                                                                
+                                                                                                                                                                                                                                                                                             
+  4. Program the FPGA                                                                                                                                                                                                                                                                        
+                                                                                                                                                                                                                                                                                             
+  Option A — Volatile load via JTAG (lost on power cycle):                                                                                                                                                                                                                                   
+  make program    # Generates program.tcl and programs via Vivado hardware manager
+                                                                                                                                                                                                                                                                                             
+  Option B — Persistent flash via JTAG (survives power cycle):                                                                                                                                                                                                                               
+  make fpga.mcs   # Generate MCS flash image from bitstream
+  make flash       # Program flash memory via indirect JTAG                                                                                                                                                                                                                                  
+  Then either boot from Vivado hardware manager or power-cycle the board.                                                                                                                                                                                                                    
+                                                                                                                                                                                                                                                                                             
+  Option C — Flash via PCIe (if a Corundum design is already running):                                                                                                                                                                                                                       
+  cd rtl/lib/corundum/utils && make                                                                                                                                                                                                                                                          
+  sudo ./mqnic-fw -d /dev/mqnic0 -w fpga.bit   # Write bitstream to flash                                                                                                                                                                                                                    
+  sudo ./mqnic-fw -d /dev/mqnic0 -b            # Reboot FPGA from flash                                                                                                                                                                                                                      
+                                                                                                                                                                                                                                                                                             
+  5. Build and Load the Linux Kernel Driver                                                                                                                                                                                                                                                  
+                                                                                                                                                                                                                                                                                             
+  cd rtl/lib/corundum/modules/mqnic                                                                                                                                                                                                                                                          
+  make                                                                                                                                                                                                                                                                                       
+  sudo insmod mqnic.ko                                                                                                                                                                                                                                                                       
+                                                                                                                                                                                                                                                                                             
+  6. Build Userspace Utilities                                                                                                                                                                                                                                                               
+                  
+  cd rtl/lib/corundum/utils                                                                                                                                                                                                                                                                  
+  make    # Builds mqnic-fw, mqnic-dump, and other tools
+                                                                                                                                                                                                                                                                                             
+  7. Configure the Network Interface                                                                                                                                                                                                                                                         
+                                                                                                                                                                                                                                                                                             
+  sudo ip link set dev <ifname> up                                                                                                                                                                                                                                                           
+  sudo ip addr add 10.0.0.2/24 dev <ifname>
+                                                                                                                                                                                                                                                                                             
+  8. Verify                                                                                                                                                                                                                                                                                  
+                                                                                                                                                                                                                                                                                             
+  ping <remote_ip>                    # Basic connectivity                                                                                                                                                                                                                                   
+  iperf3 -c <server_ip>              # Throughput test                                                                                                                                                                                                                                       
+  ptp4l -i <ifname> --slaveOnly      # PTP sync test
+                                                                                                                                                                                                                                                                                             
+  ---             
+  Key files to review for a new board:
+  - Porting guide: rtl/lib/corundum/docs/source/porting.rst                                                                                                                                                                                                                                  
+  - Getting started: rtl/lib/corundum/docs/source/gettingstarted.rst
+  - Board config example: any config.tcl under fpga/mqnic/                                                                                                                                                                                                                                   
+  - Master build rules: fpga/mqnic/Alveo/fpga_100g/common/vivado.mk
+  - Flash tool: utils/mqnic-fw.c                                                                                                                                                                                                                                                             
+                                             

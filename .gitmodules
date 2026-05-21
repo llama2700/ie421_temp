@@ -4,3 +4,6 @@
 [submodule "rtl/lib/ethtool"]
 	path = rtl/lib/ethtool
 	url = https://github.com/serhepopovych/ethtool.git
+[submodule "Alveo-Cards"]
+	path = Alveo-Cards
+	url = git@github.com:llama2700/Alveo-Cards-UL3422.git
