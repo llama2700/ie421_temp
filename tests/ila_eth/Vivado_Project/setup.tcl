@@ -41,6 +41,10 @@ add_files -fileset sources_1 ${_origin_dir_}/RTL/renesas_i2c/renesas_i2c_sequenc
 add_files -fileset sources_1 ${_origin_dir_}/RTL/renesas_i2c/renesas_i2c_axi_master.v
 add_files -fileset sources_1 ${_origin_dir_}/RTL/renesas_i2c/renesas_i2c_top.v
 
+add_files -fileset sources_1 ${_origin_dir_}/RTL/tx_replay/tx_replay_bram.v
+add_files -fileset sources_1 ${_origin_dir_}/RTL/tx_replay/tx_replay_regs.v
+add_files -fileset sources_1 ${_origin_dir_}/RTL/tx_replay/tx_replay_top.v
+
 add_files -fileset sources_1 ${_origin_dir_}/RTL/qsfp_i2c/RTL/state_machine/state_machine_pwr.v
 add_files -fileset sources_1 ${_origin_dir_}/RTL/qsfp_i2c/RTL/state_machine/state_machine_top.v
 add_files -fileset sources_1 ${_origin_dir_}/RTL/qsfp_i2c/RTL/state_machine/state_machine_sb.v
@@ -204,6 +208,20 @@ set_property -dict [list \
   CONFIG.Write_Width_A {32} \
   CONFIG.Write_Width_B {16} \
 ] [get_ips blk_mem_gen_0]
+
+# Dual port BRAM for TX replay frame storage (8 KB usable)
+create_ip -name blk_mem_gen -vendor xilinx.com -library ip -version 8.4 -module_name blk_mem_gen_tx
+set_property -dict [list \
+  CONFIG.Interface_Type {Native} \
+  CONFIG.Enable_A {Always_Enabled} \
+  CONFIG.Enable_B {Always_Enabled} \
+  CONFIG.Memory_Type {True_Dual_Port_RAM} \
+  CONFIG.Write_Depth_A {2048} \
+  CONFIG.Write_Width_A {32} \
+  CONFIG.Write_Width_B {16} \
+  CONFIG.Use_RSTA_Pin {false} \
+  CONFIG.Use_RSTB_Pin {false} \
+] [get_ips blk_mem_gen_tx]
 
 # I2C controllers
 create_ip -name axi_iic -vendor xilinx.com -library ip -version 2.1 -module_name axi_iic_0

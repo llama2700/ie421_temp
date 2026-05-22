@@ -429,7 +429,7 @@ wire        sys_if_wen_5   ;
 wire [31:0] sys_if_rdata_5 ;
 
 wire        sys_if_wen_6   ;
-wire [31:0] sys_if_rdata_6 = 'h0;
+wire [31:0] sys_if_rdata_6 ;
 
 wire        sys_if_wen_7   ;
 wire [31:0] sys_if_rdata_7 = 'h0;
@@ -736,6 +736,49 @@ BUFG_GT BUFG_GT_INST_130 (
 );
 
 
+// ---------------------------------------------------------------
+//
+//  TX replay BRAM + control regs (slot 6, addr 0x0006_xxxx)
+//
+// ---------------------------------------------------------------
+
+wire        tx_replay_bram_clkb     ;
+wire        tx_replay_bram_web      ;
+wire [15:0] tx_replay_bram_addrb    ;
+wire [15:0] tx_replay_bram_dinb     ;
+wire [15:0] tx_replay_bram_doutb    ;
+
+wire        tx_replay_enable_sys    ;
+wire [1:0]  tx_replay_mode_sys      ;
+wire        tx_replay_sw_trig_sys   ;
+wire [11:0] tx_replay_frame_len_sys ;
+wire        tx_replay_busy_sys      ;
+wire [15:0] tx_replay_frame_cnt_sys ;
+
+tx_replay_top tx_replay_top (
+    .sys_if_clk     ( sys_if_clk              ),
+    .sys_if_rstn    ( sys_if_rstn             ),
+    .sys_if_wen     ( sys_if_wen_6            ),
+    .sys_if_addr    ( sys_if_addr_0           ),
+    .sys_if_wdata   ( sys_if_wdata            ),
+    .sys_if_rdata   ( sys_if_rdata_6          ),
+
+    .tx_bram_clkb   ( tx_replay_bram_clkb     ),
+    .tx_bram_web    ( tx_replay_bram_web      ),
+    .tx_bram_addrb  ( tx_replay_bram_addrb    ),
+    .tx_bram_dinb   ( tx_replay_bram_dinb     ),
+    .tx_bram_doutb  ( tx_replay_bram_doutb    ),
+
+    .tx_enable      ( tx_replay_enable_sys    ),
+    .tx_mode        ( tx_replay_mode_sys      ),
+    .tx_sw_trigger  ( tx_replay_sw_trig_sys   ),
+    .tx_frame_len   ( tx_replay_frame_len_sys ),
+
+    .tx_busy        ( tx_replay_busy_sys      ),
+    .tx_frame_cnt   ( tx_replay_frame_cnt_sys )
+);
+
+
 // -----------------------------------------------------------
 //
 //  GTF Port 1 (RAW) -- QSFPDD1 / Bank 127, loopback FIFO
@@ -794,7 +837,22 @@ gtf_top_2 #(
     .fifo_rst           (1'b0),
 
     .ctl_hwchk_frm_gen_en_in ( 1'b0 ),
-    .ctl_hwchk_mon_en_in     ( 1'b0 )
+    .ctl_hwchk_mon_en_in     ( 1'b0 ),
+
+    // tx-replay BRAM Port-B handle (clocked at tx_axis_clk[0])
+    .tx_replay_bram_clkb     ( tx_replay_bram_clkb     ),
+    .tx_replay_bram_web      ( tx_replay_bram_web      ),
+    .tx_replay_bram_addrb    ( tx_replay_bram_addrb    ),
+    .tx_replay_bram_dinb     ( tx_replay_bram_dinb     ),
+    .tx_replay_bram_doutb    ( tx_replay_bram_doutb    ),
+
+    // tx-replay control / status (sys_if_clk domain)
+    .tx_replay_enable_sys    ( tx_replay_enable_sys    ),
+    .tx_replay_mode_sys      ( tx_replay_mode_sys      ),
+    .tx_replay_sw_trig_sys   ( tx_replay_sw_trig_sys   ),
+    .tx_replay_frame_len_sys ( tx_replay_frame_len_sys ),
+    .tx_replay_busy_sys      ( tx_replay_busy_sys      ),
+    .tx_replay_frame_cnt_sys ( tx_replay_frame_cnt_sys )
 );
 
 // BUFG to move SYNCE clock onto fabric for frequency measurement

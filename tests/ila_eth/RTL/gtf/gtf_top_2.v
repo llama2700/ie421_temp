@@ -60,8 +60,23 @@ module gtf_top_2 # (
     // User loopback FIFO Reset...
     input  wire                     fifo_rst           ,
 
-    input  wire                     ctl_hwchk_frm_gen_en_in , 
-    input  wire                     ctl_hwchk_mon_en_in              
+    input  wire                     ctl_hwchk_frm_gen_en_in ,
+    input  wire                     ctl_hwchk_mon_en_in              ,
+
+    // tx-replay BRAM Port-B handle (clocked at tx_axis_clk[0])
+    output wire                     tx_replay_bram_clkb     ,
+    output wire                     tx_replay_bram_web      ,
+    output wire [15:0]              tx_replay_bram_addrb    ,
+    output wire [15:0]              tx_replay_bram_dinb     ,
+    input  wire [15:0]              tx_replay_bram_doutb    ,
+
+    // tx-replay control / status (sys_if_clk domain)
+    input  wire                     tx_replay_enable_sys    ,
+    input  wire [1:0]               tx_replay_mode_sys      ,
+    input  wire                     tx_replay_sw_trig_sys   ,
+    input  wire [11:0]              tx_replay_frame_len_sys ,
+    output wire                     tx_replay_busy_sys      ,
+    output wire [15:0]              tx_replay_frame_cnt_sys
 );
 
 //-----------------------------------------------
@@ -222,7 +237,22 @@ gtfwizard_mac_gtfmac_ex # (
     .fifo_rst                           ( fifo_rst                   ),
     
     .ctl_hwchk_frm_gen_en_in            ( ctl_hwchk_frm_gen_en_in    ),
-    .ctl_hwchk_mon_en_in                ( ctl_hwchk_mon_en_in        )
-); 
+    .ctl_hwchk_mon_en_in                ( ctl_hwchk_mon_en_in        ),
+
+    // tx-replay BRAM Port-B handle (clocked at tx_axis_clk[0])
+    .tx_replay_bram_clkb                ( tx_replay_bram_clkb        ),
+    .tx_replay_bram_web                 ( tx_replay_bram_web         ),
+    .tx_replay_bram_addrb               ( tx_replay_bram_addrb       ),
+    .tx_replay_bram_dinb                ( tx_replay_bram_dinb        ),
+    .tx_replay_bram_doutb               ( tx_replay_bram_doutb       ),
+
+    // tx-replay control / status (sys_if_clk domain)
+    .tx_replay_enable_sys               ( tx_replay_enable_sys       ),
+    .tx_replay_mode_sys                 ( tx_replay_mode_sys         ),
+    .tx_replay_sw_trig_sys              ( tx_replay_sw_trig_sys      ),
+    .tx_replay_frame_len_sys            ( tx_replay_frame_len_sys    ),
+    .tx_replay_busy_sys                 ( tx_replay_busy_sys         ),
+    .tx_replay_frame_cnt_sys            ( tx_replay_frame_cnt_sys    )
+);
 
 endmodule

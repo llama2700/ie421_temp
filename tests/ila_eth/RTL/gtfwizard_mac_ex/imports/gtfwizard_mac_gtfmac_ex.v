@@ -86,10 +86,24 @@ module gtfwizard_mac_gtfmac_ex # (
     // 200 Mhz system clock
     input  wire                      freerun_clk                      ,
 
-    input  wire                      ctl_hwchk_frm_gen_en_in          , 
-    input  wire                      ctl_hwchk_mon_en_in              
+    input  wire                      ctl_hwchk_frm_gen_en_in          ,
+    input  wire                      ctl_hwchk_mon_en_in              ,
 
-); 
+    // tx-replay BRAM Port-B handle (clocked at tx_axis_clk[0])
+    output wire                      tx_replay_bram_clkb              ,
+    output wire                      tx_replay_bram_web               ,
+    output wire [15:0]               tx_replay_bram_addrb             ,
+    output wire [15:0]               tx_replay_bram_dinb              ,
+    input  wire [15:0]               tx_replay_bram_doutb             ,
+
+    // tx-replay control / status (sys_if_clk domain)
+    input  wire                      tx_replay_enable_sys             ,
+    input  wire [1:0]                tx_replay_mode_sys               ,
+    input  wire                      tx_replay_sw_trig_sys            ,
+    input  wire [11:0]               tx_replay_frame_len_sys          ,
+    output wire                      tx_replay_busy_sys               ,
+    output wire [15:0]               tx_replay_frame_cnt_sys
+);
 
     wire [80*NUM_CHANNEL-1:0]        tx_ptp_tstamp_out;
     wire [80*NUM_CHANNEL-1:0]        rx_ptp_tstamp_out;
@@ -397,71 +411,76 @@ wire replay_tx_begin;
 wire rx_was_valid;
 reg  rx_was_valid_prev;
 
-reg  [15:0] tx_replay_rom [0:31];
-reg  [5:0]  tx_replay_idx;
+reg  [11:0] tx_replay_idx;
 reg         tx_replay_active;
 reg [29:0]  tx_replay_interrupt_cnt;
 
 if(TX_DISABLE_HW_GEN) begin : gen_tx_axis_tvalid_zero
-    initial begin
-        // DMAC broadcast ff:ff:ff:ff:ff:ff
-        tx_replay_rom[0]  = 16'hffff;
-        tx_replay_rom[1]  = 16'hffff;
-        tx_replay_rom[2]  = 16'hffff;
-
-        // SMAC 02:14:21:41:34:22
-        tx_replay_rom[3]  = 16'h1402;
-        tx_replay_rom[4]  = 16'h4121;
-        tx_replay_rom[5]  = 16'h2234;
-
-        // EtherType 0x88b5
-        tx_replay_rom[6]  = 16'hb588;
-
-        // Payload 46 bytes
-        tx_replay_rom[7]  = 16'h4548;
-        tx_replay_rom[8]  = 16'h4c4c;
-        tx_replay_rom[9]  = 16'h5f4f;
-        tx_replay_rom[10] = 16'h4648;
-        tx_replay_rom[11] = 16'h3154;
-        tx_replay_rom[12] = 16'h2031;
-        tx_replay_rom[13] = 16'h2020;
-        tx_replay_rom[14] = 16'h6569;
-        tx_replay_rom[15] = 16'h3234;
-        tx_replay_rom[16] = 16'h6631;
-        tx_replay_rom[17] = 16'h7774;
-        tx_replay_rom[18] = 16'h0021;
-        tx_replay_rom[19] = 16'h0000;
-        tx_replay_rom[20] = 16'h0000;
-        tx_replay_rom[21] = 16'h0000;
-        tx_replay_rom[22] = 16'h0000;
-        tx_replay_rom[23] = 16'h0000;
-        tx_replay_rom[24] = 16'h0000;
-        tx_replay_rom[25] = 16'h0000;
-        tx_replay_rom[26] = 16'h0000;
-        tx_replay_rom[27] = 16'h0000;
-        tx_replay_rom[28] = 16'h0000;
-        tx_replay_rom[29] = 16'h0000;
-
-        // FCS 4 bytes - Unused
-        tx_replay_rom[30] = 16'hea30;
-        tx_replay_rom[31] = 16'h5fdf;
-
-        tx_replay_idx = 0;
-        tx_replay_active = 1'b0;
-        replay_tx_axis_tvalid = 1'b0;
-        replay_tx_axis_tsof = 1'b0;
-        replay_tx_axis_tlast = 8'b0;
-        tx_replay_interrupt_cnt = 0;
-    end
 
     assign replay_tx_axis_tpre = 8'h0;
     assign replay_tx_axis_terr = 1'b0;
     assign replay_tx_axis_tterm = 5'b0;
     assign replay_tx_axis_tpoison = 1'b0;
 
-    // assign replay_tx_begin = &tx_replay_interrupt_cnt;
-    assign replay_tx_begin = rx_was_valid & ~rx_was_valid_prev;
-    
+    // control / status crossings between sys_if_clk and tx_axis_clk[0]
+    wire        enable_tx;
+    wire [1:0]  mode_tx;
+    wire [11:0] frame_len_tx;
+    wire        sw_trig_tx_pulse;
+    wire        mode_tx_continuous = (mode_tx == 2'b10);
+
+    xpm_cdc_single #(
+        .DEST_SYNC_FF(2), .INIT_SYNC_FF(0),
+        .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)
+    ) u_cdc_enable (
+        .dest_out (enable_tx),
+        .dest_clk (tx_axis_clk[0]),
+        .src_clk  (1'b0),
+        .src_in   (tx_replay_enable_sys)
+    );
+
+    xpm_cdc_array_single #(
+        .DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .WIDTH(2),
+        .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)
+    ) u_cdc_mode (
+        .dest_out (mode_tx),
+        .dest_clk (tx_axis_clk[0]),
+        .src_clk  (1'b0),
+        .src_in   (tx_replay_mode_sys)
+    );
+
+    xpm_cdc_array_single #(
+        .DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .WIDTH(12),
+        .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)
+    ) u_cdc_frame_len (
+        .dest_out (frame_len_tx),
+        .dest_clk (tx_axis_clk[0]),
+        .src_clk  (1'b0),
+        .src_in   (tx_replay_frame_len_sys)
+    );
+
+    xpm_cdc_pulse #(
+        .DEST_SYNC_FF(2), .INIT_SYNC_FF(0),
+        .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)
+    ) u_cdc_sw_trig (
+        .dest_pulse (sw_trig_tx_pulse),
+        .dest_clk   (tx_axis_clk[0]),
+        .dest_rst   (1'b0),
+        .src_clk    (axi_aclk),
+        .src_pulse  (tx_replay_sw_trig_sys),
+        .src_rst    (1'b0)
+    );
+
+    // muxed trigger -- gated by enable + mode select
+    wire trig_rx   = rx_was_valid & ~rx_was_valid_prev;
+    wire trig_sw   = sw_trig_tx_pulse;
+    wire trig_cont = mode_tx_continuous & ~tx_replay_active;
+    assign replay_tx_begin = enable_tx & (
+        (mode_tx == 2'b00 & trig_sw)   |
+        (mode_tx == 2'b01 & trig_rx)   |
+        (mode_tx == 2'b10 & trig_cont)
+    );
+
     always @ (posedge tx_axis_clk[0]) begin
         if(tx_axis_rst[0]) begin
             tx_replay_interrupt_cnt <= 0;
@@ -486,9 +505,53 @@ if(TX_DISABLE_HW_GEN) begin : gen_tx_axis_tvalid_zero
         rx_was_valid_prev <= rx_was_valid;
     end
 
+    // BRAM Port-B address generated with 1-cycle lookahead to cover the
+    // blk_mem_gen read latency, gated on tready so we don't advance past
+    // a held beat
+    wire [11:0] tx_replay_idx_lookahead =
+        (tx_replay_active & replay_tx_axis_tready[0]) ?
+            (tx_replay_idx + 12'd1) : tx_replay_idx;
+
+    assign tx_replay_bram_clkb  = tx_axis_clk[0];
+    assign tx_replay_bram_web   = 1'b0;
+    assign tx_replay_bram_dinb  = 16'h0;
+    assign tx_replay_bram_addrb = {4'h0, tx_replay_idx_lookahead};
+
+    // frame-completion counter in tx_axis_clk[0] -- increments on the
+    // beat that closes a frame (idx == frame_len - 1)
+    reg [15:0] frame_cnt_tx;
+    always @(posedge tx_axis_clk[0]) begin
+        if (tx_axis_rst[0])
+            frame_cnt_tx <= 16'h0;
+        else if (tx_replay_active && replay_tx_axis_tready[0] &&
+                 (tx_replay_idx == (frame_len_tx - 12'd1)))
+            frame_cnt_tx <= frame_cnt_tx + 16'd1;
+    end
+
+    xpm_cdc_single #(
+        .DEST_SYNC_FF(2), .INIT_SYNC_FF(0),
+        .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)
+    ) u_cdc_busy (
+        .dest_out (tx_replay_busy_sys),
+        .dest_clk (axi_aclk),
+        .src_clk  (1'b0),
+        .src_in   (tx_replay_active)
+    );
+
+    xpm_cdc_gray #(
+        .DEST_SYNC_FF(2), .INIT_SYNC_FF(0),
+        .REG_OUTPUT(1), .SIM_ASSERT_CHK(0),
+        .SIM_LOSSLESS_GRAY_CHK(0), .WIDTH(16)
+    ) u_cdc_frame_cnt (
+        .dest_out_bin (tx_replay_frame_cnt_sys),
+        .dest_clk     (axi_aclk),
+        .src_clk      (tx_axis_clk[0]),
+        .src_in_bin   (frame_cnt_tx)
+    );
+
     always @(posedge tx_axis_clk[0]) begin
         if(tx_axis_rst[0]) begin
-            tx_replay_idx <= 0;
+            tx_replay_idx <= 12'd0;
             tx_replay_active <= 1'b0;
             replay_tx_axis_tvalid <= 1'b0;
             replay_tx_axis_tsof <= 1'b0;
@@ -502,20 +565,20 @@ if(TX_DISABLE_HW_GEN) begin : gen_tx_axis_tvalid_zero
                 tx_replay_active <= 1'b1;
                 replay_tx_axis_tvalid <= 1'b1;
 
-                // Advance to next byte if current byte was accepted by downstream
+                // advance to next word if current word was accepted by downstream
                 if(replay_tx_axis_tready[0]) begin
-                    replay_tx_axis_tdata <= {48'b0, tx_replay_rom[tx_replay_idx]};
-                    tx_replay_idx <= tx_replay_idx + 1'b1;
+                    replay_tx_axis_tdata <= {48'b0, tx_replay_bram_doutb};
+                    tx_replay_idx <= tx_replay_idx + 12'd1;
 
-                    // Insert TLAST on 7th to last byte as per example
-                    if(tx_replay_idx == 6'd28) begin
+                    // insert tlast on the penultimate word
+                    if(tx_replay_idx == (frame_len_tx - 12'd2)) begin
                         replay_tx_axis_tlast <= 8'h2;
                     end
 
-                    // Reset to idle after 20 bytes sent (FCS is generated by MAC, so not included in replay data)
-                    if(tx_replay_idx == 6'd29) begin
-                        tx_replay_idx <= 1'b0;
-                        tx_replay_active <= 1'b0;
+                    // reset to idle after the last word (FCS appended by MAC)
+                    if(tx_replay_idx == (frame_len_tx - 12'd1)) begin
+                        tx_replay_idx <= 12'd0;
+                        tx_replay_active <= mode_tx_continuous;
                     end
                 end
             end else begin
